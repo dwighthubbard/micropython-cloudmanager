@@ -223,8 +223,8 @@ def list_registered_boards(args):
 
 
 def execute_command_on_board(args):
-    host = read_rc_config()[args.board].get('redis_server', '127.0.0.1')
-    port = read_rc_config()[args.board].get('redis_port', '18266')
+    host = read_rc_config()["settings"].get('redis_server', '127.0.0.1')
+    port = read_rc_config()["settings"].get('redis_port', '18266')
     port = int(port)
     status_key = 'board:' + args.board
 
