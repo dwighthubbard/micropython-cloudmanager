@@ -1,0 +1,309 @@
+#!/usr/bin/env python
+from __future__ import print_function
+import argparse
+import hotqueue
+import json
+import logging
+import os
+import redis
+import socket
+import subprocess
+import sys
+import time
+
+
+logger_name = __name__
+if logger_name == '__main__':
+    logger_name = os.path.basename(sys.argv[0])
+logger = logging.getLogger(logger_name)
+
+
+class ConnectionError(Exception):
+    pass
+
+def send_key_value(socket, key, value):
+    key_value = key + '=' + value
+    key_value = key_value.encode('ascii')
+    socket.send('%d\r\n' % len(key_value))
+    socket.send(key_value + '\r\n')
+
+
+def configure_device(config_dict, hostname=None, port=8266):
+    if not hostname:
+        hostname = '192.168.4.1'
+    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        client_socket.connect((hostname, port))
+    except socket.error:
+        raise ConnectionError('Unable to connect to the configuration service on micropython board')
+    for key, value in config_dict.items():
+        send_key_value(client_socket, key, value)
+    client_socket.close()
+
+
+def wifi_interfaces_proc():
+    interfaces = []
+    with open('/proc/net/wireless') as wifi_interface_handle:
+        for line in wifi_interface_handle:
+            if ':' in line:
+                interfaces.append(line.strip().split(':')[0])
+    return interfaces
+
+
+def wifi_interfaces():
+    interfaces = []
+    for line in subprocess.check_output(['nmcli', 'device']).split('\n'):
+        device = line.strip().split()
+        if len(device) == 4 and device[1] == 'wifi':
+            interfaces.append(device[0])
+    return interfaces
+
+
+def scan_interface_for_micropython_boards_iwlist(interface):
+    command = ['/sbin/iwlist', interface, 'scan']
+
+    output = subprocess.check_output(command)
+    essid_set = set()
+    for line in output.split('\n'):
+        line = line.strip()
+        if line.startswith('ESSID:'):
+            essid = line[6:].strip('"')
+            if essid.startswith('micropython-') and len(essid.split('-')) == 3:
+                essid_set.add(line[6:].strip('"'))
+    return list(essid_set)
+
+
+def scan_interface_for_micropython_boards_nmcli(interface):
+    command = ['nmcli', 'device', 'wifi', 'list', 'ifname', interface]
+    output = subprocess.check_output(command)
+    essid_list = []
+    for line in output.split('\n'):
+        line = line.strip()
+        if line:
+            essid = line.strip().split()[0].strip()
+            if essid.startswith('micropython-') and len(essid.split('-')) == 3:
+                essid_list.append(essid)
+    return essid_list
+
+
+def scan_interface_for_micropython_boards(interface):
+    return scan_interface_for_micropython_boards_nmcli(interface)
+
+
+class NetworkConnectionFailed(Exception):
+    pass
+
+
+def connect_to_micropython_wifi_nmcli(ssid, password):
+    command = [ 'nmcli', 'device', 'wifi', 'connect', ssid]
+    if password:
+        command += ['password', password]
+    logger.debug(' '.join(command))
+    try:
+        subprocess.check_call(command)
+    except subprocess.CalledProcessError:
+        raise NetworkConnectionFailed('Unable to connect to wifi network %r' % ssid)
+
+def disconnect_from_micropython_wifi_nmcli(ssid):
+    command = [ 'nmcli', 'connection', 'delete', ssid]
+    logger.debug(' '.join(command))
+    subprocess.check_call(command)
+
+def scan_for_micropython_boards():
+    boards = []
+    for interface in wifi_interfaces():
+        logger.debug('Scanning wifi adapter %r for micropython boards', interface)
+        boards += scan_interface_for_micropython_boards(interface)
+    return boards
+
+
+def active_connection_nmcli(interface=None):
+    command = ['nmcli', '-t', '-f', 'NAME,TYPE', 'connection', 'show', '--active']
+    logger.debug(command)
+    for line in subprocess.check_output(command).split('\n'):
+        line=line.strip().split(':')
+        if line[-1] == '802-11-wireless':
+            return line[0]
+
+
+def active_connection_field_nmcli(ssid=None, field=None):
+    if not ssid:
+        return
+    if not field:
+        field = 'IP4.ADDRESS[1]'
+    command = ['nmcli', '-s', 'connection', 'show', ssid]
+    logger.debug(command)
+    for line in subprocess.check_output(command).split('\n'):
+        line = line.split(':', 1)
+        if line[0] == field:
+            return line[-1].strip()
+
+
+def active_connection_password_nmcli(ssid=None):
+    if not ssid:
+        return
+    command = ['nmcli', '-s', 'connection', 'show', ssid]
+    logger.debug(command)
+    for line in subprocess.check_output(command).split('\n'):
+        line = line.split(':', 1)
+        if line[0] == '802-11-wireless-security.psk':
+            logger.debug(line[-1].strip())
+            return line[-1].strip()
+
+def activate_connection_nmcli(connection):
+    if not connection:
+        logger.debug('No previous active connection specified')
+        return
+    command = ['nmcli', 'connection', 'up', connection]
+    logger.debug(command)
+    subprocess.check_call(command)
+
+def action_configure_device(arguments):
+    config_dict = {
+    }
+    if arguments.name:
+        config_dict['name'] = arguments.name
+    else:
+        config_dict['name'] = arguments.board
+    if arguments.ssid:
+        config_dict['wifi_ssid'] = arguments.ssid
+        config_dict['wifi_password'] = arguments.wifi_passphrase
+        config_dict['redis_server'] = arguments.redis_server
+        config_dict['redis_port'] = arguments.redis_port
+    for item in arguments.keyval:
+        if ':' in item:
+            key, value = item.split(':', 1)
+            config_dict[key] = value
+    rc_config = {}
+    rc_config_file = os.path.expanduser('~/.micropython_bootconfig.json')
+    if os.path.exists(rc_config_file):
+        with open(rc_config_file) as read_fh:
+            json.load(read_fh)
+
+    rc_config[config_dict['name']] = config_dict
+    with open(rc_config_file) as write_fh:
+        json.dump(rc_config, write_fh)
+
+    logger.debug('Sending configuration %r to device %r', config_dict, arguments.board)
+    active_connection = active_connection_nmcli(wifi_interfaces())
+    logger.debug('Active connection is %r', active_connection)
+    logger.debug('Connecting to the micropython board via wifi')
+    connect_to_micropython_wifi_nmcli(arguments.board, 'MicropyBootConfig')
+    logger.debug('Sending over the device configuration')
+    try:
+        configure_device(config_dict)
+    except ConnectionError:
+        logger.error('Configuration of device %r failed', arguments.board)
+    logger.debug('Destroying the temporary wifi connection')
+    disconnect_from_micropython_wifi_nmcli(arguments.board)
+    logger.debug('Restoring the original wifi connection')
+    activate_connection_nmcli(active_connection)
+
+
+def read_rc_config():
+    rc_config = {}
+    rc_config_file = os.path.expanduser('~/.micropython_bootconfig.json')
+    if os.path.exists(rc_config_file):
+        with open(rc_config_file) as read_fh:
+            rc_config = json.load(read_fh)
+    return rc_config
+
+
+def list_registered_boards(args):
+    redis_db = redis.Redis(host='127.0.0.1', port=6666)
+    for board in redis_db.keys('board:*'):
+        print(board[6:])
+
+
+def execute_command_on_board(args):
+    host = read_rc_config()[args.board].get('redis_server', '127.0.0.1')
+    port = read_rc_config()[args.board].get('redis_port', '18266')
+    port = int(port)
+    status_key = 'board:' + args.board
+
+    base_key = 'repl:' + args.board
+    command_key = base_key + '.command'
+    console_key = base_key + '.console'
+    stdout_key = console_key + '.stdout'
+    complete_key = base_key + '.complete'
+    logging_key = base_key + '.logging'
+
+    redis_db = redis.Redis(host=host, port=port)
+    if args.debug:
+        redis_db.set(logging_key, logging.DEBUG)
+
+    command = sys.stdin.read()
+    # redis_db.delete(stdout_key)
+    # print('sending: %s'% command)
+    redis_db.delete(stdout_key)
+    redis_db.rpush(command_key, command)
+    position = 0
+    rc = 0
+    while True:
+        endpos = redis_db.strlen(stdout_key)
+        if endpos > position:
+            result = redis_db.getrange(stdout_key, position, endpos)
+            position = endpos
+            print(result, end='')
+            # sys.stdout.write(result)
+            sys.stdout.flush()
+        rc = redis_db.blpop(complete_key, timeout=1)
+        if rc is not None:
+            rc = rc[1]
+            break
+
+    endpos = redis_db.strlen(stdout_key)
+    if endpos > position:
+        result = redis_db.getrange(stdout_key, position, endpos)
+        print(result, end='')
+        sys.stdout.flush()
+
+    # redis_db.delete(stdout_key)
+    if rc is None:
+        rc = -1
+    sys.exit(int(rc))
+
+
+if __name__ == "__main__":
+    # logging.basicConfig(level=logging.DEBUG)
+    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    command_parser = parser.add_subparsers(dest='command', help='Commands')
+
+    configure_parser = command_parser.add_parser('configure', help='Configure a micropython device',formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    configure_parser.add_argument('board', help='Micropython boards to configure')
+    configure_parser.add_argument('--name', default=None, help="Name of the board (default to the board name)")
+    wifi_group = configure_parser.add_argument_group('Wifi Settings')
+    wifi_group.add_argument('--ssid', default=None, help="The wifi network to connect to")
+    wifi_group.add_argument('--wifi_passphrase', default=None, help='The passphrase/password for the wifi network')
+    configure_parser.add_argument('--keyval', action='append', default=[], help='Add arbitrary key/values to the configuration')
+
+    redis_group = configure_parser.add_argument_group('Redis Settings')
+    redis_group.add_argument('--redis_server', default=None, help='Redis server address')
+    redis_group.add_argument('--redis_port', default='18266', help='Redis server port')
+
+    scan_parser = command_parser.add_parser('scan', help='Scan for unconfigured micropython devices')
+
+    list_parser = command_parser.add_parser('list', help='List registered boards')
+
+    execute_parser = command_parser.add_parser('execute', help='Execute commands from stdin on a board')
+    execute_parser.add_argument('board', help='Micropython board to run the command on')
+    execute_parser.add_argument('--debug', default=False, action='store_true', help='Enable debug logging')
+
+    args = parser.parse_args()
+    logger.debug('Parsed arguments %r received', args)
+    if args.command == 'configure':
+        if not args.ssid:
+            ssid=active_connection_nmcli()
+            if ssid:
+                wifi_passphrase = active_connection_password_nmcli(ssid)
+        if not args.redis_server:
+            args.redis_server = active_connection_field_nmcli(ssid, 'IP4.ADDRESS[1]').split('/')[0]
+        action_configure_device(args)
+    elif args.command == 'scan':
+        print('\n'.join(scan_for_micropython_boards()))
+    elif args.command == 'execute':
+        execute_command_on_board(args)
+    elif args.command == 'list':
+        list_registered_boards(args)
+    else:
+        parser.usage()
