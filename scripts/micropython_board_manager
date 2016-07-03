@@ -10,6 +10,7 @@ import subprocess
 import sys
 import time
 from sys import platform
+import hostlists
 
 
 logger_name = __name__
@@ -24,8 +25,9 @@ class ConnectionError(Exception):
 def send_key_value(socket, key, value):
     key_value = key + '=' + value
     key_value = key_value.encode('ascii')
-    socket.send('%d\r\n' % len(key_value))
-    socket.send(key_value + '\r\n')
+    len_str = '%d\r\n' % len(key_value)
+    socket.send(len_str.encode('ascii'))
+    socket.send(key_value + b'\r\n')
 
 
 def configure_device(config_dict, hostname=None, port=8266):
@@ -52,7 +54,7 @@ def wifi_interfaces_proc():
 
 def wifi_interfaces():
     interfaces = []
-    for line in subprocess.check_output(['nmcli', 'device']).split('\n'):
+    for line in subprocess.check_output(['nmcli', 'device']).decode().split('\n'):
         device = line.strip().split()
         if len(device) == 4 and device[1] == 'wifi':
             interfaces.append(device[0])
@@ -75,7 +77,7 @@ def scan_interface_for_micropython_boards_iwlist(interface):
 
 def scan_interface_for_micropython_boards_nmcli(interface):
     command = ['nmcli', 'device', 'wifi', 'list', 'ifname', interface]
-    output = subprocess.check_output(command)
+    output = subprocess.check_output(command).decode()
     essid_list = []
     for line in output.split('\n'):
         line = line.strip()
@@ -120,7 +122,7 @@ def scan_for_micropython_boards():
 def active_connection_nmcli(interface=None):
     command = ['nmcli', '-t', '-f', 'NAME,TYPE', 'connection', 'show', '--active']
     logger.debug(command)
-    for line in subprocess.check_output(command).split('\n'):
+    for line in subprocess.check_output(command).decode().split('\n'):
         line=line.strip().split(':')
         if line[-1] == '802-11-wireless':
             return line[0]
@@ -133,7 +135,7 @@ def active_connection_field_nmcli(ssid=None, field=None):
         field = 'IP4.ADDRESS[1]'
     command = ['nmcli', '-s', 'connection', 'show', ssid]
     logger.debug(command)
-    for line in subprocess.check_output(command).split('\n'):
+    for line in subprocess.check_output(command).decode().split('\n'):
         line = line.split(':', 1)
         if line[0] == field:
             return line[-1].strip()
@@ -144,7 +146,7 @@ def active_connection_password_nmcli(ssid=None):
         return
     command = ['nmcli', '-s', 'connection', 'show', ssid]
     logger.debug(command)
-    for line in subprocess.check_output(command).split('\n'):
+    for line in subprocess.check_output(command).decode().split('\n'):
         line = line.split(':', 1)
         if line[0] == '802-11-wireless-security.psk':
             logger.debug(line[-1].strip())
@@ -181,7 +183,7 @@ def action_configure_device(arguments):
             json.load(read_fh)
 
     rc_config[config_dict['name']] = config_dict
-    with open(rc_config_file) as write_fh:
+    with open(rc_config_file, 'w') as write_fh:
         json.dump(rc_config, write_fh)
 
     logger.debug('Sending configuration %r to device %r', config_dict, arguments.board)
@@ -222,13 +224,18 @@ def list_registered_boards(args):
             print(format % (board_info, board))
 
 
-def execute_command_on_board(args):
+def header(message):
+    print('*'*78)
+    print(message)
+    print('*'*78)
+
+def execute_command_on_board(board, command, args):
     host = read_rc_config()["settings"].get('redis_server', '127.0.0.1')
     port = read_rc_config()["settings"].get('redis_port', '18266')
     port = int(port)
-    status_key = 'board:' + args.board
+    status_key = 'board:' + board
 
-    base_key = 'repl:' + args.board
+    base_key = 'repl:' + board
     command_key = base_key + '.command'
     console_key = base_key + '.console'
     stdout_key = console_key + '.stdout'
@@ -239,13 +246,14 @@ def execute_command_on_board(args):
     if args.debug:
         redis_db.set(logging_key, logging.DEBUG)
 
-    command = sys.stdin.read()
     # redis_db.delete(stdout_key)
     # print('sending: %s'% command)
     redis_db.delete(stdout_key)
     redis_db.rpush(command_key, command)
+    redis_db.expire(command_key, 5)
     position = 0
     rc = 0
+    header('Executing on %r' % board)
     while True:
         endpos = redis_db.strlen(stdout_key)
         if endpos > position:
@@ -258,6 +266,9 @@ def execute_command_on_board(args):
         if rc is not None:
             rc = rc[1]
             break
+        if redis_db.exists(command_key):
+            print('Board %r is not responding\n' % board)
+            return 1
 
     endpos = redis_db.strlen(stdout_key)
     if endpos > position:
@@ -268,7 +279,8 @@ def execute_command_on_board(args):
     # redis_db.delete(stdout_key)
     if rc is None:
         rc = -1
-    sys.exit(int(rc))
+    print()
+    return int(rc)
 
 
 if __name__ == "__main__":
@@ -310,7 +322,9 @@ if __name__ == "__main__":
     elif args.command == 'scan':
         print('\n'.join(scan_for_micropython_boards()))
     elif args.command == 'execute':
-        execute_command_on_board(args)
+        command = sys.stdin.read()
+        for board in hostlists.expand(args.board):
+            execute_command_on_board(board, command, args)
     elif args.command == 'list':
         list_registered_boards(args)
     else:
