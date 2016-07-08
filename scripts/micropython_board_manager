@@ -31,16 +31,22 @@ def read_rc_config():
 
 
 def list_registered_boards(args):
-    format = "%-10.10s %-50.50s"
+    format = "%-10.10s %-50.50s %-10.10s"
     redis_db = redis.Redis(host='127.0.0.1', port=6666)
-    boards = redis_db.keys('board:*')
+    boards = []
+    for board in redis_db.keys('board:*'):
+        state = redis_db.get(board)
+        if state in [b'idle']:
+            boards.append(board)
     if boards:
-        print(format % ('Platform', 'Name'))
+        boards.sort()
+        print(format % ('Platform', 'Name', 'State'))
         for board in boards:
+            state = redis_db.get(board).decode()
             board = board.decode()[6:]
             info_key = 'boardinfo:' + board
             board_info = redis_db.get(info_key).decode()
-            print(format % (board_info, board))
+            print(format % (board_info, board, state))
 
 
 def header(message):
@@ -48,12 +54,16 @@ def header(message):
     print(message)
     print('*'*78)
 
-def execute_command_on_board(board, command, args):
+
+def connect_to_redis():
     host = read_rc_config()["settings"].get('redis_server', '127.0.0.1')
     port = read_rc_config()["settings"].get('redis_port', '18266')
     port = int(port)
-    status_key = 'board:' + board
+    return redis.Redis(host=host, port=port)
 
+
+def execute_command_on_board(board, command, args):
+    status_key = 'board:' + board
     base_key = 'repl:' + board
     command_key = base_key + '.command'
     console_key = base_key + '.console'
@@ -61,7 +71,7 @@ def execute_command_on_board(board, command, args):
     complete_key = base_key + '.complete'
     logging_key = base_key + '.logging'
 
-    redis_db = redis.Redis(host=host, port=port)
+    redis_db = connect_to_redis()
     if args.debug:
         redis_db.set(logging_key, logging.DEBUG)
 
@@ -102,6 +112,33 @@ def execute_command_on_board(board, command, args):
     return int(rc)
 
 
+def print_on_board(board, message):
+    redis_db = connect_to_redis()
+    base_key = 'repl:' + board
+    key = base_key + '.print'
+    redis_db.rpush(key, message)
+    redis_db.expire(key, 30)
+
+
+def rename_board(board, name):
+    redis_db = connect_to_redis()
+    base_key = 'repl:' + board
+    key = base_key + '.rename'
+    redis_db.rpush(key, name)
+    redis_db.expire(key, 30)
+
+
+def copy_file_to_board(board, filename):
+    redis_db = connect_to_redis()
+    base_key = 'repl:' + board
+    file_key = 'file:' + board + ':' + filename
+    key = base_key + '.copy'
+    redis_db.rpush(key, filename)
+    with open(filename) as file_handle:
+        data = file_handle.read()
+    redis_db.set(file_key, data)
+
+
 if __name__ == "__main__":
     # logging.basicConfig(level=logging.DEBUG)
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -128,6 +165,18 @@ if __name__ == "__main__":
     execute_parser.add_argument('board', help='Micropython board to run the command on')
     execute_parser.add_argument('--debug', default=False, action='store_true', help='Enable debug logging')
 
+    print_parser = command_parser.add_parser('print', help='Print on the console')
+    print_parser.add_argument('board', help='Micropython board to run the command on')
+    print_parser.add_argument('message', help='Message to print on the console')
+
+    rename_parser = command_parser.add_parser('rename', help='Rename the board')
+    rename_parser.add_argument('board', help='Micropython board to run the command on')
+    rename_parser.add_argument('name', help='New board name')
+
+    upload_parser = command_parser.add_parser('upload', help='Upload file to board')
+    upload_parser.add_argument('board', help='Micropython board to run the command on')
+    upload_parser.add_argument('filename', help='File to upload')
+
     args = parser.parse_args()
     logger.debug('Parsed arguments %r received', args)
     if args.command == 'configure':
@@ -144,7 +193,13 @@ if __name__ == "__main__":
         command = sys.stdin.read()
         for board in hostlists.expand(args.board):
             execute_command_on_board(board, command, args)
+    elif args.command == 'print':
+        print_on_board(args.board, args.message)
+    elif args.command == 'rename':
+        rename_board(args.board, args.name)
     elif args.command == 'list':
         list_registered_boards(args)
+    elif args.command == 'upload':
+        copy_file_to_board(args.board, args.filename)
     else:
         parser.usage()
