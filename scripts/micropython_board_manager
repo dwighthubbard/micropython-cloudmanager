@@ -8,8 +8,11 @@ import redis
 import sys
 from sys import platform
 import hostlists
+import redislite
 from cloudmanager.configure_device import active_connection_nmcli, active_connection_password_nmcli, \
     active_connection_field_nmcli, action_configure_device, scan_for_micropython_boards
+from cloudmanager.server import run_server, quit, status
+
 
 logger_name = __name__
 if logger_name == '__main__':
@@ -32,7 +35,8 @@ def read_rc_config():
 
 def list_registered_boards(args):
     format = "%-10.10s %-50.50s %-10.10s"
-    redis_db = redis.Redis(host='127.0.0.1', port=6666)
+    redis_db = connect_to_redis()
+    # redis_db = redis.Redis(host='127.0.0.1', port=18266)
     boards = []
     for board in redis_db.keys('board:*'):
         state = redis_db.get(board)
@@ -56,6 +60,7 @@ def header(message):
 
 
 def connect_to_redis():
+    return redislite.Redis(dbfilename='cloudmanager.rdb')
     host = read_rc_config()["settings"].get('redis_server', '127.0.0.1')
     port = read_rc_config()["settings"].get('redis_port', '18266')
     port = int(port)
@@ -142,6 +147,7 @@ def copy_file_to_board(board, filename):
 if __name__ == "__main__":
     # logging.basicConfig(level=logging.DEBUG)
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument('--rdbfile', default='cloudmanager.rdb', help='Redis server rdb backing file')
     command_parser = parser.add_subparsers(dest='command', help='Commands')
 
     if platform == 'linux':
@@ -177,6 +183,11 @@ if __name__ == "__main__":
     upload_parser.add_argument('board', help='Micropython board to run the command on')
     upload_parser.add_argument('filename', help='File to upload')
 
+    status_parser = command_parser.add_parser('status', help='Show the server status')
+    shutdown_parser = command_parser.add_parser('shutdown', help='Shutdown the server')
+    start_parser = command_parser.add_parser('start', help='Start the server')
+    start_parser.add_argument('--port', default='18266', type=int, help='Redis server port')
+
     args = parser.parse_args()
     logger.debug('Parsed arguments %r received', args)
     if args.command == 'configure':
@@ -201,5 +212,14 @@ if __name__ == "__main__":
         list_registered_boards(args)
     elif args.command == 'upload':
         copy_file_to_board(args.board, args.filename)
+    elif args.command in ['shutdown', 'quit']:
+        quit(args.rdbfile)
+        sys.exit(0)
+    elif args.command in ['status']:
+        status(args.rdbfile)
+        sys.exit(0)
+    elif args.command in ['start']:
+        run_server(args.port, args.rdbfile)
+
     else:
         parser.usage()
