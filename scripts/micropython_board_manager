@@ -84,7 +84,7 @@ def execute_command_on_board(board, command, args):
     # print('sending: %s'% command)
     redis_db.delete(stdout_key)
     redis_db.rpush(command_key, command)
-    redis_db.expire(command_key, 5)
+    redis_db.expire(command_key, 3)
     position = 0
     rc = 0
     header('Executing on %r' % board)
@@ -100,9 +100,9 @@ def execute_command_on_board(board, command, args):
         if rc is not None:
             rc = rc[1]
             break
-        if redis_db.exists(command_key):
-            print('Board %r is not responding\n' % board)
-            return 1
+        if not redis_db.exists(command_key) or not redis_db.exists(stdout_key):
+            print('Board %r is not responding\n' % board, file=sys.stderr)
+            return -1
 
     endpos = redis_db.strlen(stdout_key)
     if endpos > position:
