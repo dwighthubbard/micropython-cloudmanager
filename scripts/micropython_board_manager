@@ -84,7 +84,7 @@ def execute_command_on_board(board, command, args):
     # print('sending: %s'% command)
     redis_db.delete(stdout_key)
     redis_db.rpush(command_key, command)
-    redis_db.expire(command_key, 3)
+    redis_db.expire(command_key, 10)
     position = 0
     rc = 0
     header('Executing on %r' % board)
@@ -93,8 +93,8 @@ def execute_command_on_board(board, command, args):
         if endpos > position:
             result = redis_db.getrange(stdout_key, position, endpos)
             position = endpos
-            print(result.decode(), end='')
-            # sys.stdout.write(result)
+            # print(result.decode(), end='')
+            sys.stdout.write(result)
             sys.stdout.flush()
         rc = redis_db.blpop(complete_key, timeout=1)
         if rc is not None:
@@ -133,10 +133,13 @@ def rename_board(board, name):
     redis_db.expire(key, 30)
 
 
-def copy_file_to_board(board, filename):
+def copy_file_to_board(board, filename, dest=None):
     redis_db = connect_to_redis()
     base_key = 'repl:' + board
     file_key = 'file:' + board + ':' + filename
+    dest_key = 'filedest:' + board + ':' + filename
+    if dest:
+        redis_db.set(dest_key, dest)
     key = base_key + '.copy'
     redis_db.rpush(key, filename)
     with open(filename) as file_handle:
@@ -174,7 +177,7 @@ if __name__ == "__main__":
         board_configuration_parser.add_argument('--redis_server', default=None, help='Redis server address')
         board_configuration_parser.add_argument('--redis_port', default='18266', help='Redis server port')
 
-    board_execute_parser.add_argument('board', default=None, help='Message to print on the console')
+    board_execute_parser.add_argument('board', default=None, help='Board(s) to execute the code on')
     board_execute_parser.add_argument('--debug', default=False, action='store_true', help='Enable debug logging')
 
     board_print_parser.add_argument('board', default=None, help='Message to print on the console')
@@ -185,6 +188,7 @@ if __name__ == "__main__":
 
     board_upload_parser.add_argument('board', default=None, help='Message to print on the console')
     board_upload_parser.add_argument('filename', help='File to upload')
+    board_upload_parser.add_argument('dest', default=None, help='Destination directory')
 
     server_start_parser = subparsers.add_parser('server-start', help='Server start')
     server_start_parser.add_argument('--port', default='18266', type=int, help='Redis server port')
@@ -219,7 +223,7 @@ if __name__ == "__main__":
     elif args.operation == 'board-list':
         list_registered_boards(args)
     elif args.operation == 'board-upload':
-        copy_file_to_board(args.board, args.filename)
+        copy_file_to_board(args.board, args.filename, args.dest)
     elif args.operation in ['server-shutdown', 'server-stop']:
         quit(args.rdbfile)
         sys.exit(0)

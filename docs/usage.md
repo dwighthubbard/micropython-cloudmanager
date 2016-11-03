@@ -42,12 +42,31 @@ The board-print command will print text to the specified boards console
 
 The board-rename command will change the name of a managed board
 
+usage: mbm board-rename [-h] board name
+
+positional arguments:
+  board       Board to rename
+  name        New board name
+
 ### board-execute
 
 The board-execute command will send the command from the stdin stream to all the boards specified and return the output
 
-**Note** - The current micropython port to the wipy and wipy2 boards does not currently return output.
+usage: mbm board-execute [-h] [--debug] board
+
+positional arguments:
+  board       Board(s) to execute the code on
+
+**Note** - The current micropython firmware on the wipy and wipy2 boards does not currently return output.
 
 ### board-upload
 
 The board-upload command will upload a file to all of the specified boards.
+
+usage: mbm board-upload [-h] board filename dest
+
+positional arguments:
+  board       Message to print on the console
+  filename    File to upload
+  dest        Destination filename (optional)
+
