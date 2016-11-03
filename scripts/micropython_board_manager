@@ -146,51 +146,55 @@ def copy_file_to_board(board, filename):
 
 if __name__ == "__main__":
     # logging.basicConfig(level=logging.DEBUG)
-    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+    )
     parser.add_argument('--rdbfile', default='cloudmanager.rdb', help='Redis server rdb backing file')
-    command_parser = parser.add_subparsers(dest='command', help='Commands')
+    subparsers = parser.add_subparsers(
+        dest='operation', help='Operations',
+    )
+
+    board_scan_parser = subparsers.add_parser('board-scan', help='Board scan')
+    board_scan_parser = subparsers.add_parser('board-list', help='Board list')
+    board_execute_parser = subparsers.add_parser('board-execute', help='Board execute')
+    board_print_parser = subparsers.add_parser('board-print', help='Board print')
+    board_rename_parser = subparsers.add_parser('board-rename', help='Board rename')
+    board_upload_parser = subparsers.add_parser('board-upload', help='Board upload')
 
     if platform == 'linux':
-        configure_parser = command_parser.add_parser('configure', help='Configure a micropython device',formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-        configure_parser.add_argument('board', help='Micropython boards to configure')
-        configure_parser.add_argument('--name', default=None, help="Name of the board (default to the board name)")
-        wifi_group = configure_parser.add_argument_group('Wifi Settings')
-        wifi_group.add_argument('--ssid', default=None, help="The wifi network to connect to")
-        wifi_group.add_argument('--wifi_passphrase', default=None, help='The passphrase/password for the wifi network')
-        configure_parser.add_argument('--keyval', action='append', default=[], help='Add arbitrary key/values to the configuration')
+        board_configuration_parser = subparsers.add_parser('board-config', help='Board configuration')
+        board_configuration_parser.add_argument('board', default=None, help='Micropython boards to configure')
+        board_configuration_parser.add_argument('--name', default=None, help="Name of the board (default to the board name)")
+        board_configuration_parser.add_argument(
+            '--keyval', action='append', default=[], help='Add arbitrary key/values to the configuration'
+        )
 
-        redis_group = configure_parser.add_argument_group('Redis Settings')
-        redis_group.add_argument('--redis_server', default=None, help='Redis server address')
-        redis_group.add_argument('--redis_port', default='18266', help='Redis server port')
+        board_configuration_parser.add_argument('--ssid', default=None, help="The wifi network to connect to")
+        board_configuration_parser.add_argument('--wifi_passphrase', default=None, help='The passphrase/password for the wifi network')
 
-        scan_parser = command_parser.add_parser('scan', help='Scan for unconfigured micropython devices')
+        board_configuration_parser.add_argument('--redis_server', default=None, help='Redis server address')
+        board_configuration_parser.add_argument('--redis_port', default='18266', help='Redis server port')
 
-    list_parser = command_parser.add_parser('list', help='List registered boards')
+    board_execute_parser.add_argument('board', default=None, help='Message to print on the console')
+    board_execute_parser.add_argument('--debug', default=False, action='store_true', help='Enable debug logging')
 
-    execute_parser = command_parser.add_parser('execute', help='Execute commands from stdin on a board')
-    execute_parser.add_argument('board', help='Micropython board to run the command on')
-    execute_parser.add_argument('--debug', default=False, action='store_true', help='Enable debug logging')
+    board_print_parser.add_argument('board', default=None, help='Message to print on the console')
+    board_print_parser.add_argument('message', help='Message to print on the console')
 
-    print_parser = command_parser.add_parser('print', help='Print on the console')
-    print_parser.add_argument('board', help='Micropython board to run the command on')
-    print_parser.add_argument('message', help='Message to print on the console')
+    board_rename_parser.add_argument('board', default=None, help='Board to rename')
+    board_rename_parser.add_argument('name', help='New board name')
 
-    rename_parser = command_parser.add_parser('rename', help='Rename the board')
-    rename_parser.add_argument('board', help='Micropython board to run the command on')
-    rename_parser.add_argument('name', help='New board name')
+    board_upload_parser.add_argument('board', default=None, help='Message to print on the console')
+    board_upload_parser.add_argument('filename', help='File to upload')
 
-    upload_parser = command_parser.add_parser('upload', help='Upload file to board')
-    upload_parser.add_argument('board', help='Micropython board to run the command on')
-    upload_parser.add_argument('filename', help='File to upload')
-
-    status_parser = command_parser.add_parser('status', help='Show the server status')
-    shutdown_parser = command_parser.add_parser('shutdown', help='Shutdown the server')
-    start_parser = command_parser.add_parser('start', help='Start the server')
-    start_parser.add_argument('--port', default='18266', type=int, help='Redis server port')
+    server_start_parser = subparsers.add_parser('server-start', help='Server start')
+    server_start_parser.add_argument('--port', default='18266', type=int, help='Redis server port')
+    server_stop_parser = subparsers.add_parser('server-stop', help='Stop server')
+    server_status_parser = subparsers.add_parser('server-status', help='Server status')
 
     args = parser.parse_args()
-    logger.debug('Parsed arguments %r received', args)
-    if args.command == 'configure':
+
+    if args.operation == 'board-configure':
         if not args.ssid:
             ssid=active_connection_nmcli()
             if ssid:
@@ -198,27 +202,27 @@ if __name__ == "__main__":
         if not args.redis_server:
             args.redis_server = active_connection_field_nmcli(ssid, 'IP4.ADDRESS[1]').split('/')[0]
         action_configure_device(args)
-    elif args.command == 'scan':
+    elif args.operation == 'board-scan':
         print('\n'.join(scan_for_micropython_boards()))
-    elif args.command == 'execute':
+    elif args.operation == 'board-execute':
         command = sys.stdin.read()
         for board in hostlists.expand(args.board):
             execute_command_on_board(board, command, args)
-    elif args.command == 'print':
+    elif args.operation == 'board-print':
         print_on_board(args.board, args.message)
-    elif args.command == 'rename':
+    elif args.operation == 'board-rename':
         rename_board(args.board, args.name)
-    elif args.command == 'list':
+    elif args.operation == 'board-list':
         list_registered_boards(args)
-    elif args.command == 'upload':
+    elif args.operation == 'board-upload':
         copy_file_to_board(args.board, args.filename)
-    elif args.command in ['shutdown', 'quit']:
+    elif args.operation in ['server-shutdown', 'server-stop']:
         quit(args.rdbfile)
         sys.exit(0)
-    elif args.command in ['status']:
+    elif args.operation == 'server-status':
         status(args.rdbfile)
         sys.exit(0)
-    elif args.command in ['start']:
+    elif args.operaton in ['server-start']:
         run_server(args.port, args.rdbfile)
 
     else:
