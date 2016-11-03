@@ -55,3 +55,24 @@ be sent to he board(s), executed and the results displayed::
 
     $
 
+Upload a file to some boards
+****************************
+
+The `mbm board-upload` command will upload a file to one or more boards.  
+
+So for example to copy the file "hello_world.py" to the lib (module) directory on 2 boards works like this (note, wipy boards will execute commands but currently do not return output)::
+
+    $ mbm board-upload micropython-esp8266-f1fa9e,wipy2-001 hello_world.py lib/hello_world.py
+    $ mbm board-execute micropython-esp8266-f1fa9e,wipy2-001
+    import hello_world
+    hello_world.hello_world()
+    ******************************************************************************
+    Executing on 'micropython-esp8266-f1fa9e'
+    ******************************************************************************
+    Hello World!
+    
+    ******************************************************************************
+    Executing on 'wipy2-001'
+    ******************************************************************************
+    
+    $
