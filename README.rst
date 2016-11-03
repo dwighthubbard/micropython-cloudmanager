@@ -1,6 +1,12 @@
 Install
 =======
 
+The micropython-cloudmanager should run on any Posix compliant operating system that is supported by redis.  
+
+However some functionality is only available when running on a fairly current Linux operating system.
+
+The micropython-cloudmanager is easiest to install from pypi with pip::
+
     pip install micropython-cloudmanager
 
 Start the service
