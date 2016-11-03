@@ -1,3 +1,0 @@
-# micropython-cloudmanager
-
-Micropython
