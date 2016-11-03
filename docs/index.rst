@@ -8,7 +8,7 @@ Table of Contents
 .. toctree::
    :maxdepth: 2
 
-   quickstart.md
+   quickstart.rst
    install.md
    design.md
    usage.md

@@ -1,17 +1,20 @@
-# Quickstart
-
-## Install
+Install
+=======
 
     pip install micropython-cloudmanager
 
-## Start the service
+Start the service
+*****************
 
     mbm server-start
 
-## Configure the cloudclient on the micropython boards to talk to the service
+Configure the cloudclient on the micropython boards to talk to the service
+**************************************************************************
 
 
-## List the boards
+
+List the boards
+***************
 
 The `mbm board-list` command will list the boards that have registered with the cloudmanager service.
 
@@ -21,7 +24,8 @@ The `mbm board-list` command will list the boards that have registered with the 
     WiPy       wipy2-001                                          idle
     $
 
-## Run a command on some boards
+Run a command on some boards
+****************************
 
 The `mbm board-execute` command will send the commands from standard input to one or more boards.
 
