@@ -149,7 +149,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
-    parser.add_argument('--rdbfile', default='cloudmanager.rdb', help='Redis server rdb backing file')
     subparsers = parser.add_subparsers(
         dest='operation', help='Operations',
     )
@@ -189,8 +188,13 @@ if __name__ == "__main__":
 
     server_start_parser = subparsers.add_parser('server-start', help='Server start')
     server_start_parser.add_argument('--port', default='18266', type=int, help='Redis server port')
+    server_start_parser.add_argument('--rdbfile', default='cloudmanager.rdb', help='Redis server rdb backing file')
+
     server_stop_parser = subparsers.add_parser('server-stop', help='Stop server')
+    server_stop_parser.add_argument('--rdbfile', default='cloudmanager.rdb', help='Redis server rdb backing file')
+
     server_status_parser = subparsers.add_parser('server-status', help='Server status')
+    server_status_parser.add_argument('--rdbfile', default='cloudmanager.rdb', help='Redis server rdb backing file')
 
     args = parser.parse_args()
 
@@ -222,8 +226,7 @@ if __name__ == "__main__":
     elif args.operation == 'server-status':
         status(args.rdbfile)
         sys.exit(0)
-    elif args.operaton in ['server-start']:
+    elif args.operation in ['server-start']:
         run_server(args.port, args.rdbfile)
-
     else:
-        parser.usage()
+        parser.print_usage()
