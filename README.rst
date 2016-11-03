@@ -26,8 +26,7 @@ Configure the cloudclient on the micropython boards to talk to the service
 
 Install and configure the micropython-redis-cloudclient on the micropython boards to be managed.
 
-`<https://github.com/dwighthubbard/micropython-redis-cloudclient/blob/master/README.md>`_
-
+micropython-redis-cloudclient_
 
 List the boards
 ***************
@@ -79,3 +78,5 @@ So for example to copy the file "hello_world.py" to the lib (module) directory o
     ******************************************************************************
     
     $
+
+.. _micropython-redis-cloudclient: https://github.com/dwighthubbard/micropython-redis-cloudclient/blob/master/README.md
