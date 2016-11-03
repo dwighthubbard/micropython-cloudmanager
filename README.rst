@@ -6,7 +6,9 @@ Install
 Start the service
 *****************
 
-    mbm server-start
+Run the `mbm server-start` command to start the cloudmanager service on the current host::
+
+    $ mbm server-start
 
 Configure the cloudclient on the micropython boards to talk to the service
 **************************************************************************
@@ -16,7 +18,7 @@ Configure the cloudclient on the micropython boards to talk to the service
 List the boards
 ***************
 
-The `mbm board-list` command will list the boards that have registered with the cloudmanager service.
+The `mbm board-list` command will list the boards that have registered with the cloudmanager service::
 
     $ mbm board-list
     Platform   Name                                               State
@@ -29,7 +31,8 @@ Run a command on some boards
 
 The `mbm board-execute` command will send the commands from standard input to one or more boards.
 
-If nothing is provided on the standard input you can type what to execute and type **ctrl-d** to execute it.
+Run the `mbm board-execute [boardname]` command, then type the code to execute and hit **CTRL-D** and the code will
+be sent to he board(s), executed and the results displayed::
 
     $ mbm board-execute micropython-esp8266-f1fa9e
     import os
