@@ -1,3 +1,8 @@
+.. image:: https://readthedocs.org/projects/micropython-cloudmanager/badge/?version=latest
+:target: http://micropython-cloudmanager.readthedocs.io/en/latest/?badge=latest
+:alt: Documentation Status
+==================================================================
+
 Install
 =======
 
