@@ -24,7 +24,9 @@ Run the `mbm server-start` command to start the cloudmanager service on the curr
 Configure the cloudclient on the micropython boards to talk to the service
 **************************************************************************
 
+Install and configure the micropython-redis-cloudclient on the micropython boards to be managed.
 
+.. target:: https://github.com/dwighthubbard/micropython-redis-cloudclient/blob/master/README.md
 
 List the boards
 ***************
