@@ -2,7 +2,7 @@
 import os
 from recommonmark.parser import CommonMarkParser
 
-import microqueue as doc_module
+import cloudmanager as doc_module
 
 
 html_theme = 'default'

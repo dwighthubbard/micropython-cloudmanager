@@ -8,9 +8,10 @@ Table of Contents
 .. toctree::
    :maxdepth: 2
 
+   quickstart.md
    install.md
+   design.md
    usage.md
-   resource_usage.md
 
 Indices and tables
 ******************
