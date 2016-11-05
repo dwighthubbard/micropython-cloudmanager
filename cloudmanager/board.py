@@ -84,7 +84,7 @@ def create_file_transaction(board, file_key, dest, ttl=3600):
 
     # If a ttl was specified set the expire time
     if ttl:
-        redis_db.ttl(transaction_key, ttl)
+        redis_db.expire(transaction_key, ttl)
 
     # Return the transaction key
     return transaction_key
