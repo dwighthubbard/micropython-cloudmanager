@@ -121,7 +121,7 @@ def copy_file_to_boards(boards, filename, dest=None):
 
     for board in boards:
         if board not in registered_boards():
-            print('board %r is not registered with cloudmanager')
+            print('board %r is not registered with cloudmanager' % board)
             continue
         transaction = create_file_transaction(board, file_key, dest)
         print('copy {0} -> {1}:{2}'.format(filename, board, dest))
