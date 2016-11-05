@@ -106,10 +106,9 @@ if __name__ == "__main__":
     elif args.operation == 'board-rename':
         rename_board(args.board, args.name)
     elif args.operation == 'board-list':
-        print(registered_boards())
         list_registered_boards()
     elif args.operation == 'board-upload':
-        copy_file_to_boards(args.boards, args.filename, args.dest)
+        copy_file_to_boards(hostlists.expand(args.board), args.filename, args.dest)
     elif args.operation in ['server-shutdown', 'server-stop']:
         quit(args.rdbfile)
         sys.exit(0)
