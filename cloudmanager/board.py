@@ -141,6 +141,7 @@ def execute_command_on_board(board, command, args):
     redis_db = connect_to_redis()
 
     redis_db.delete(stdout_key)
+    redis_db.delete(complete_key)
     redis_db.rpush(command_key, command)
     redis_db.expire(command_key, 10)
     position = 0
@@ -163,7 +164,6 @@ def execute_command_on_board(board, command, args):
         #     print('Board %r is not responding\n' % board, file=sys.stderr)
         #     return -1
 
-    time.sleep(5)
     print('debug', redis_db.get(stdout_key))
     # redis_db.delete(stdout_key)
     if rc is None:
