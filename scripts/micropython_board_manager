@@ -7,8 +7,8 @@ import os
 import sys
 from sys import platform
 import hostlists
-from cloudmanager.board import copy_file_to_boards, execute_command_on_board, list_registered_boards, print_on_board, \
-    rename_board
+from cloudmanager.board import copy_file_to_boards, execute_command_on_board, registered_boards, \
+    list_registered_boards, print_on_board, rename_board
 from cloudmanager.configure_device import active_connection_nmcli, active_connection_password_nmcli, \
     active_connection_field_nmcli, action_configure_device, scan_for_micropython_boards
 from cloudmanager.server import run_server, quit, status
@@ -87,9 +87,7 @@ if __name__ == "__main__":
     server_status_parser.add_argument('--rdbfile', default='cloudmanager.rdb', help='Redis server rdb backing file')
 
     args = parser.parse_args()
-    args.boards = []
-    if args.board:
-        args.boards = hostlists.expand(args.board)
+    print(registered_boards())
     if args.operation == 'board-configure':
         if not args.ssid:
             ssid=active_connection_nmcli()
