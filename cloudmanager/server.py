@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 from __future__ import print_function
-import argparse
 import daemon
 import logging
-import sys
 import time
 import redislite
 
@@ -70,25 +68,3 @@ def status(rdb_file):
         print(status.decode())
         return
     print('Not running')
-
-
-if __name__ == "__main__":
-    # logging.basicConfig(level=logging.DEBUG)
-    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('--rdbfile', default='cloudmanager.rdb', help='Redis server rdb backing file')
-    command_parser = parser.add_subparsers(dest='command', help='Commands')
-    status_parser = command_parser.add_parser('status', help='Show the server status')
-    shutdown_parser = command_parser.add_parser('shutdown', help='Shutdown the server')
-    start_parser = command_parser.add_parser('start', help='Start the server')
-    start_parser.add_argument('--port', default='18266', type=int, help='Redis server port')
-
-    args = parser.parse_args()
-
-    if args.command in ['shutdown', 'quit']:
-        quit(args.rdbfile)
-        sys.exit(0)
-    elif args.command in ['status']:
-        status(args.rdbfile)
-        sys.exit(0)
-
-    run_server(args.port, args.rdbfile)

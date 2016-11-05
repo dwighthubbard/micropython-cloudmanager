@@ -19,6 +19,6 @@ interface with a central redis server.""",
     maintainer_email='dwight@dwighthubbard.com',
     packages=['cloudmanager'],
     scripts=['scripts/micropython_board_manager', 'scripts/mbm'],
-    version='0.0.46',
+    version='0.0.47',
     zip_safe=True,
 )
