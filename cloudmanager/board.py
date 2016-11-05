@@ -162,6 +162,7 @@ def execute_command_on_board(board, command, args):
         #     print('Board %r is not responding\n' % board, file=sys.stderr)
         #     return -1
 
+    print('debug', redis_db.get(stdout_key))
     # redis_db.delete(stdout_key)
     if rc is None:
         rc = -1
