@@ -96,7 +96,7 @@ def copy_file_to_boards(boards, filename, dest=None):
 
     file_key = upload_to_redis(filename)
 
-    for board in hostlists.expand(boards):
+    for board in boards:
         transaction = create_file_transaction(board, file_key, dest)
         print('copy {0} -> {1}:{2}'.format(filename, board, dest))
         send_command(board, 'copy', transaction)

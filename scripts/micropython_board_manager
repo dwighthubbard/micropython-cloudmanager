@@ -87,7 +87,9 @@ if __name__ == "__main__":
     server_status_parser.add_argument('--rdbfile', default='cloudmanager.rdb', help='Redis server rdb backing file')
 
     args = parser.parse_args()
-
+    args.boards = []
+    if args.board:
+        args.boards = hostlists.expand(args.board)
     if args.operation == 'board-configure':
         if not args.ssid:
             ssid=active_connection_nmcli()
@@ -109,7 +111,7 @@ if __name__ == "__main__":
     elif args.operation == 'board-list':
         list_registered_boards(args)
     elif args.operation == 'board-upload':
-        copy_file_to_boards(args.board, args.filename, args.dest)
+        copy_file_to_boards(args.boards, args.filename, args.dest)
     elif args.operation in ['server-shutdown', 'server-stop']:
         quit(args.rdbfile)
         sys.exit(0)
