@@ -38,7 +38,7 @@ def upload_to_redis(filename):
         Redis key that is storing the data
     """
     redis_db = connect_to_redis()
-    with open(filename) as file_handle:
+    with open(filename, 'rb') as file_handle:
         data = file_handle.read()
 
     hash = hashlib.md5(data).hexdigest()
