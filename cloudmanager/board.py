@@ -147,20 +147,20 @@ def execute_command_on_board(board, command, args):
     redis_db.rpush(command_key, command)
     redis_db.expire(command_key, 10)
     position = 0
-    rc = 0
+    rc = None
     header('Executing on %r' % board)
-    while True:
+    while rc is not None:
         endpos = redis_db.strlen(stdout_key)
         if endpos > position:
+            rc = redis_db.blpop(complete_key, timeout=1)
+            if rc is not None:
+                rc = rc[1]
             result = redis_db.getrange(stdout_key, position, endpos)
             position = endpos
             # print(result.decode(), end='')
             sys.stdout.write(result)
             sys.stdout.flush()
-        rc = redis_db.blpop(complete_key, timeout=1)
-        if rc is not None:
-            rc = rc[1]
-            break
+
         # if not redis_db.exists(command_key):
         #     print('Board %r is not responding\n' % board, file=sys.stderr)
         #     return -1
