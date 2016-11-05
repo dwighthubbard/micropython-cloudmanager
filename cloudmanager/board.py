@@ -96,8 +96,9 @@ def copy_file_to_boards(boards, filename, dest=None):
 
     file_key = upload_to_redis(filename)
 
-    for board in boards:
+    for board in hostlists.expand(boards):
         transaction = create_file_transaction(board, file_key, dest)
+        print('copy {0} -> {1}:{2}'.format(filename, board, dest))
         send_command(board, 'copy', transaction)
 
 
@@ -134,7 +135,7 @@ def execute_command_on_board(board, command, args):
         if rc is not None:
             rc = rc[1]
             break
-        if not redis_db.exists(command_key) or not redis_db.exists(stdout_key):
+        if not redis_db.exists(command_key):
             print('Board %r is not responding\n' % board, file=sys.stderr)
             return -1
 

@@ -7,7 +7,7 @@ import os
 import sys
 from sys import platform
 import hostlists
-from cloudmanager.board import copy_file_to_board, execute_command_on_board, list_registered_boards, print_on_board, \
+from cloudmanager.board import copy_file_to_boards, execute_command_on_board, list_registered_boards, print_on_board, \
     rename_board
 from cloudmanager.configure_device import active_connection_nmcli, active_connection_password_nmcli, \
     active_connection_field_nmcli, action_configure_device, scan_for_micropython_boards
@@ -109,7 +109,7 @@ if __name__ == "__main__":
     elif args.operation == 'board-list':
         list_registered_boards(args)
     elif args.operation == 'board-upload':
-        copy_file_to_board(args.board, args.filename, args.dest)
+        copy_file_to_boards(args.board, args.filename, args.dest)
     elif args.operation in ['server-shutdown', 'server-stop']:
         quit(args.rdbfile)
         sys.exit(0)
