@@ -24,7 +24,7 @@ def copy_file_to_board(board, filename, dest=None):
     redis_db.rpush(key, filename)
     with open(filename) as file_handle:
         data = file_handle.read()
-    print('Copying file %r to board %r as %r', filename, board, dest)
+    print('Copying file %r to board %r as %r' % filename, board, dest)
     redis_db.set(file_key, data)
 
 
