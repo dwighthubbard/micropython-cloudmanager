@@ -22,7 +22,7 @@ def run_server(port, rdb_file=None):
     rdb_file : str, optional
         The redis rdb file to use, default None
     """
-    connection = redislite.Redis(dbfilename=rdb_file, serverconfig=dict(port=port))
+    connection = redislite.Redis(dbfilename=rdb_file, serverconfig=dict(host='0.0.0.0', port=port))
     with daemon.DaemonContext():
         monitor_server(connection)
 
