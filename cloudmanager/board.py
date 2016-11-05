@@ -177,7 +177,7 @@ def execute_command_on_board(board, command, args):
 
 def registered_boards():
     redis_db = connect_to_redis()
-    boards = [_[6:] for _ in redis_db.keys('board:*')]
+    boards = [board[6:] for board in redis_db.keys('board:*')]
     return boards
 
 def list_registered_boards(args):
