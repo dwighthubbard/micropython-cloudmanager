@@ -2,6 +2,7 @@ import hashlib
 import logging
 import os
 import sys
+import time
 from .utility import connect_to_redis, header
 
 
@@ -162,6 +163,7 @@ def execute_command_on_board(board, command, args):
         #     print('Board %r is not responding\n' % board, file=sys.stderr)
         #     return -1
 
+    time.sleep(5)
     print('debug', redis_db.get(stdout_key))
     # redis_db.delete(stdout_key)
     if rc is None:
