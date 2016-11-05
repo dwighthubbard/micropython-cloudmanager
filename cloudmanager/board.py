@@ -18,15 +18,13 @@ def copy_file_to_board(board, filename, dest=None):
     redis_db = connect_to_redis()
     base_key = 'repl:' + board
     file_key = 'file:' + board + ':' + filename
-    dest_key = 'filedest:' + board + ':' + filename
     if dest:
-        redis_db.set(dest_key, dest)
+        file_key = 'file:' + board + ':' + dest
     key = base_key + '.copy'
     redis_db.rpush(key, filename)
     with open(filename) as file_handle:
         data = file_handle.read()
     redis_db.set(file_key, data)
-
 
 
 def execute_command_on_board(board, command, args):
@@ -82,7 +80,6 @@ def execute_command_on_board(board, command, args):
 def list_registered_boards(args):
     format = "%-10.10s %-50.50s %-10.10s"
     redis_db = connect_to_redis()
-    # redis_db = redis.Redis(host='127.0.0.1', port=18266)
     boards = []
     for board in redis_db.keys('board:*'):
         state = redis_db.get(board)
