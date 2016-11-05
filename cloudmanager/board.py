@@ -180,6 +180,7 @@ def registered_boards():
     boards = [board[6:] for board in redis_db.keys('board:*')]
     return boards
 
+
 def list_registered_boards(args):
     format = "%-10.10s %-50.50s %-10.10s"
     redis_db = connect_to_redis()
