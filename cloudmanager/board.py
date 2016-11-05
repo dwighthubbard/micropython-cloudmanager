@@ -181,7 +181,7 @@ def registered_boards():
     return boards
 
 
-def list_registered_boards(args):
+def list_registered_boards():
     format = "%-10.10s %-50.50s %-10.10s"
     redis_db = connect_to_redis()
     boards = []
