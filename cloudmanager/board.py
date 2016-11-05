@@ -1,9 +1,18 @@
+import hashlib
 import logging
+import os
 import sys
 from .utility import connect_to_redis, header
 
 
 LOG = logging.getLogger(__name__)
+
+
+def send_command(board, command, argument):
+    redis_db = connect_to_redis()
+    base_key = 'repl:' + board
+    command_key = base_key + '.' + command
+    redis_db.rpush(command_key, argument)
 
 
 def rename_board(board, name):
@@ -14,18 +23,82 @@ def rename_board(board, name):
     redis_db.expire(key, 30)
 
 
-def copy_file_to_board(board, filename, dest=None):
+def upload_to_redis(filename):
+    """
+    Upload file data to redis
+
+    Parameters
+    ----------
+    filename : str
+        The filename to upload
+
+    Returns
+    -------
+    str
+        Redis key that is storing the data
+    """
     redis_db = connect_to_redis()
-    base_key = 'repl:' + board
-    file_key = 'file:' + board + ':' + filename
-    if dest:
-        file_key = 'file:' + board + ':' + dest
-    key = base_key + '.copy'
-    redis_db.rpush(key, filename)
     with open(filename) as file_handle:
         data = file_handle.read()
-    print('Copying file %r to board %r as %r' % (filename, board, dest))
-    redis_db.set(file_key, data)
+
+    hash = hashlib.md5(data).hexdigest()
+
+    # Compute the key to store the data
+    file_key = 'file:' + hash
+    if not redis_db.exists(file_key):
+        redis_db.set(file_key, data)
+    return file_key
+
+
+def create_file_transaction(board, file_key, dest, ttl=3600):
+    """
+    Create a file transfer transaction
+
+    Parameters
+    ----------
+    board: str
+        The board to create the transaction for
+    file_key: str
+        The redis key that holds the data to be transferred
+    dest : str
+        The destination filename to store the data
+    ttl: int, optional
+        How long the transaction is valid for in seconds.
+        A value of 0 will never expire default=3600
+
+    Returns
+    -------
+    str
+        The redis key holding the transaction
+    """
+    redis_db = connect_to_redis()
+
+    # Create a unique transaction key
+    transaction_count_key = 'transaction_id:' + board
+    transaction_id = redis_db.incr(transaction_count_key)
+    transaction_key = "transaction:" + board + ':' + str(transaction_id)
+
+    # Store the arguments in the transaction key
+    redis_db.hset(transaction_key, 'source', file_key)
+    redis_db.hset(transaction_key, 'dest', dest)
+
+    # If a ttl was specified set the expire time
+    if ttl:
+        redis_db.ttl(transaction_key, ttl)
+
+    # Return the transaction key
+    return transaction_key
+
+
+def copy_file_to_boards(boards, filename, dest=None):
+    if not dest:
+        dest = os.path.basename(filename)
+
+    file_key = upload_to_redis(filename)
+
+    for board in boards:
+        transaction = create_file_transaction(board, file_key, dest)
+        send_command(board, 'copy', transaction)
 
 
 def execute_command_on_board(board, command, args):
