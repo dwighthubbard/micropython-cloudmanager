@@ -186,6 +186,7 @@ def list_registered_boards(args):
     redis_db = connect_to_redis()
     boards = []
     for board in redis_db.keys('board:*'):
+        print(board)
         state = redis_db.get(board)
         print(state)
         if state in [b'idle']:
