@@ -8,6 +8,29 @@ from .utility import connect_to_redis, header
 LOG = logging.getLogger(__name__)
 
 
+class MicropythonBoard(object):
+    name = None
+    platform = None
+
+    def __init__(self, name=None):
+        self.name = name
+        self.redis_db = connect_to_redis()
+        super(MicropythonBoard, self).__init__()
+
+    @property
+    def state(self):
+        """
+        Get the current state of the board from redis
+
+        Returns
+        -------
+        str
+            Current state
+        """
+        state_key = 'board:' + self.name
+        return self.redis_db.get(state_key).decode()
+
+
 def send_command(board, command, argument):
     redis_db = connect_to_redis()
     base_key = 'repl:' + board
@@ -151,6 +174,11 @@ def execute_command_on_board(board, command, args):
     print()
     return int(rc)
 
+
+def registered_boards():
+    redis_db = connect_to_redis()
+    boards = [_[6:] for _ in redis_db.keys('board:*')]
+    return boards
 
 def list_registered_boards(args):
     format = "%-10.10s %-50.50s %-10.10s"
