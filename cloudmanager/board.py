@@ -161,9 +161,9 @@ def execute_command_on_board(board, command, args):
         if rc is not None:
             rc = rc[1]
             break
-        if not redis_db.exists(command_key):
-            print('Board %r is not responding\n' % board, file=sys.stderr)
-            return -1
+        # if not redis_db.exists(command_key):
+        #     print('Board %r is not responding\n' % board, file=sys.stderr)
+        #     return -1
 
     endpos = redis_db.strlen(stdout_key)
     if endpos > position:
