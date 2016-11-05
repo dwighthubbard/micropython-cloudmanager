@@ -149,7 +149,7 @@ def execute_command_on_board(board, command, args):
     header('Executing on %r' % board)
     sys.stdout.write('sending: %s'% command)
     while rc is not None:
-        rc = redis_db.blpop(complete_key, timeout=1)
+        rc = redis_db.blpop(complete_key, timeout=10)
         if rc is not None:
             rc = rc[1]
 
@@ -164,7 +164,6 @@ def execute_command_on_board(board, command, args):
         #     print('Board %r is not responding\n' % board, file=sys.stderr)
         #     return -1
 
-    print('debug', redis_db.get(stdout_key))
     # redis_db.delete(stdout_key)
     if rc is None:
         rc = -1
