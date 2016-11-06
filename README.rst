@@ -36,7 +36,11 @@ The `mbm board-list` command will list the boards that have registered with the 
     $ mbm board-list
     Platform   Name                                               State
     esp8266    micropython-esp8266-f1fa9e                         idle
+    esp8266    nodemcu-001                                        idle
+    esp8266    nodemcu-002                                        idle
+    esp8266    wemos-001                                          idle
     WiPy       wipy2-001                                          idle
+    WiPy       wipy2-002                                          idle
     $
 
 Run a command on some boards
@@ -50,9 +54,7 @@ be sent to he board(s), executed and the results displayed::
     $ mbm board-execute micropython-esp8266-f1fa9e
     import os
     print(os.uname())
-    ******************************************************************************
-    Executing on 'micropython-esp8266-f1fa9e'
-    ******************************************************************************
+    ## Executing on 'micropython-esp8266-f1fa9e' #################################
     (sysname='esp8266', nodename='esp8266', release='1.5.4(baaeaebb)', version='v1.8.5-100-g10bde69-dirty on 2016-11-01', machine='ESP module with ESP8266')
 
     $
@@ -64,19 +66,18 @@ The `mbm board-upload` command will upload a file to one or more boards.
 
 So for example to copy the file "hello_world.py" to the lib (module) directory on 2 boards works like this (note, wipy boards will execute commands but currently do not return output)::
 
-    $ mbm board-upload micropython-esp8266-f1fa9e,wipy2-001 hello_world.py lib/hello_world.py
-    $ mbm board-execute micropython-esp8266-f1fa9e,wipy2-001
+    $ mbm board-upload nodemcu-00[1-2],wipy2-001 hello_world.py lib/hello_world.py
+    $ mbm board-execute nodemcu-00[1-2],wipy2-001
     import hello_world
     hello_world.hello_world()
-    ******************************************************************************
-    Executing on 'micropython-esp8266-f1fa9e'
-    ******************************************************************************
+    ## Executing on 'nodemcu-001' ################################################
     Hello World!
     
-    ******************************************************************************
-    Executing on 'wipy2-001'
-    ******************************************************************************
-    
+    ## Executing on 'nodemcu-002' ################################################
+    Hello World!
+
+    ## Executing on 'wipy2-001' ##################################################
+
     $
 
 .. _micropython-redis-cloudclient: https://github.com/dwighthubbard/micropython-redis-cloudclient/blob/master/README.md
