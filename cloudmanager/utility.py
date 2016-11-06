@@ -5,9 +5,10 @@ import redislite
 
 
 def header(message, width=80):
-    print('*'*width)
-    print(message)
-    print('*'*width)
+    header_message = '## ' + message + ' '
+    end_chars = width - (len(message) + 4)
+    header_message += '#'*end_chars
+    print(header_message)
 
 
 def connect_to_redis():
