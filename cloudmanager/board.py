@@ -130,9 +130,6 @@ def copy_file_to_boards(boards, filename, dest=None):
 
 
 def execute_command_on_board(board, command, args):
-    if board not in registered_boards():
-        print('Board %r is not registered with this cloudmanager' % board)
-        return
     status_key = 'board:' + board
     base_key = 'repl:' + board
     command_key = base_key + '.command'
@@ -149,7 +146,9 @@ def execute_command_on_board(board, command, args):
     position = 0
     rc = None
     header('Executing on %r' % board)
-    sys.stdout.write('sending: %s'% command)
+    if board not in registered_boards():
+        print('Board %r is not registered with this cloudmanager' % board)
+        return
     while rc is None:
         rc = redis_db.blpop(complete_key, timeout=1)
         if rc is not None:
