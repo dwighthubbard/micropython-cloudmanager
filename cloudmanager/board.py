@@ -147,7 +147,7 @@ def execute_command_on_board(board, command, args):
     rc = None
     header('Executing on %r' % board)
     if board not in registered_boards():
-        print('Board %r is not registered with this cloudmanager' % board)
+        print('Board %r is not registered with this cloudmanager\n' % board)
         return
     while rc is None:
         rc = redis_db.blpop(complete_key, timeout=1)
