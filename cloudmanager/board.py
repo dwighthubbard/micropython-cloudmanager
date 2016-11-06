@@ -157,7 +157,7 @@ def execute_command_on_board(board, command, args):
         if endpos > position:
             result = redis_db.getrange(stdout_key, position, endpos)
             position = endpos
-            sys.stdout.write(result)
+            sys.stdout.write(result.decode())
             sys.stdout.flush()
 
         # if not redis_db.exists(command_key):
