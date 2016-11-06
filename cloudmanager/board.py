@@ -148,7 +148,7 @@ def execute_command_on_board(board, command, args):
     rc = None
     header('Executing on %r' % board)
     sys.stdout.write('sending: %s'% command)
-    while rc is not None:
+    while rc is None:
         rc = redis_db.blpop(complete_key, timeout=10)
         if rc is not None:
             rc = rc[1]
