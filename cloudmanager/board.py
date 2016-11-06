@@ -130,6 +130,8 @@ def copy_file_to_boards(boards, filename, dest=None):
 
 
 def execute_command_on_board(board, command, args):
+    if board not in registered_boards():
+        print('Board %r is not ')
     status_key = 'board:' + board
     base_key = 'repl:' + board
     command_key = base_key + '.command'
@@ -160,9 +162,9 @@ def execute_command_on_board(board, command, args):
             sys.stdout.write(result.decode())
             sys.stdout.flush()
 
-        # if not redis_db.exists(command_key):
-        #     print('Board %r is not responding\n' % board, file=sys.stderr)
-        #     return -1
+        if not redis_db.exists(command_key):
+            print('Board %r is not responding\n' % board, file=sys.stderr)
+            return -1
 
     # redis_db.delete(stdout_key)
     if rc is None:
