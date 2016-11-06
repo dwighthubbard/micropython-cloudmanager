@@ -131,7 +131,8 @@ def copy_file_to_boards(boards, filename, dest=None):
 
 def execute_command_on_board(board, command, args):
     if board not in registered_boards():
-        print('Board %r is not ')
+        print('Board %r is not registered with this cloudmanager' % board)
+        return
     status_key = 'board:' + board
     base_key = 'repl:' + board
     command_key = base_key + '.command'
@@ -163,7 +164,7 @@ def execute_command_on_board(board, command, args):
 
         status = redis_db.get(status_key)
         if not status:
-            print('Board %r is not responding\n' % board, file=sys.stderr)
+            print('Board {0} is not responding\n'.format(board), file=sys.stderr)
             return -1
 
     # redis_db.delete(stdout_key)
