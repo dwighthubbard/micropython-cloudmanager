@@ -138,7 +138,6 @@ def execute_command_on_board(board, command, args):
     console_key = base_key + '.console'
     stdout_key = console_key + '.stdout'
     complete_key = base_key + '.complete'
-    logging_key = base_key + '.logging'
 
     redis_db = connect_to_redis()
 
@@ -151,7 +150,7 @@ def execute_command_on_board(board, command, args):
     header('Executing on %r' % board)
     sys.stdout.write('sending: %s'% command)
     while rc is None:
-        rc = redis_db.blpop(complete_key, timeout=10)
+        rc = redis_db.blpop(complete_key, timeout=1)
         if rc is not None:
             rc = rc[1]
 
@@ -162,7 +161,8 @@ def execute_command_on_board(board, command, args):
             sys.stdout.write(result.decode())
             sys.stdout.flush()
 
-        if not redis_db.exists(command_key):
+        status = redis_db.get(status_key)
+        if not status:
             print('Board %r is not responding\n' % board, file=sys.stderr)
             return -1
 
