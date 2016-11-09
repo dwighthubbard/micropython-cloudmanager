@@ -7,11 +7,13 @@ import os
 import sys
 from sys import platform
 import hostlists
-from cloudmanager.board import copy_file_to_boards, execute_command_on_board, registered_boards, \
-    list_registered_boards, print_on_board, rename_board
+# from cloudmanager.board import copy_file_to_boards, execute_command_on_board, registered_boards, \
+#     list_registered_boards, print_on_board, rename_board
+from cloudmanager.board import MicropythonBoards, MicropythonBoard, MACROS
 from cloudmanager.configure_device import active_connection_nmcli, active_connection_password_nmcli, \
     active_connection_field_nmcli, action_configure_device, scan_for_micropython_boards
 from cloudmanager.server import run_server, quit, status
+from cloudmanager.utility import header
 
 
 logger_name = __name__
@@ -41,11 +43,10 @@ if __name__ == "__main__":
     subparsers = parser.add_subparsers(
         dest='operation', help='Operations',
     )
-
+    board_macro_parser = subparsers.add_parser('board', help='Execute a macro on the board')
     board_scan_parser = subparsers.add_parser('board-scan', help='Board scan')
     board_scan_parser = subparsers.add_parser('board-list', help='Board list')
     board_execute_parser = subparsers.add_parser('board-execute', help='Board execute')
-    board_print_parser = subparsers.add_parser('board-print', help='Board print')
     board_rename_parser = subparsers.add_parser('board-rename', help='Board rename')
     board_upload_parser = subparsers.add_parser('board-upload', help='Board upload')
 
@@ -63,11 +64,12 @@ if __name__ == "__main__":
         board_configuration_parser.add_argument('--redis_server', default=None, help='Redis server address')
         board_configuration_parser.add_argument('--redis_port', default='18266', help='Redis server port')
 
+    board_macro_parser.add_argument('board', default=None, help='Board(s) to execute the code on')
+    board_macro_parser.add_argument('macro', default='ls', help="Macro command to execute on the board")
+    board_macro_parser.add_argument('arguments', nargs='?', help='Macro arguments')
+
     board_execute_parser.add_argument('board', default=None, help='Board(s) to execute the code on')
     board_execute_parser.add_argument('--debug', default=False, action='store_true', help='Enable debug logging')
-
-    board_print_parser.add_argument('board', default=None, help='Message to print on the console')
-    board_print_parser.add_argument('message', help='Message to print on the console')
 
     board_rename_parser.add_argument('board', default=None, help='Board to rename')
     board_rename_parser.add_argument('name', help='New board name')
@@ -99,16 +101,26 @@ if __name__ == "__main__":
         print('\n'.join(scan_for_micropython_boards()))
     elif args.operation == 'board-execute':
         command = sys.stdin.read()
-        for board in hostlists.expand(args.board):
-            execute_command_on_board(board, command, args)
-    elif args.operation == 'board-print':
-        print_on_board(args.board, args.message)
+        for result in MicropythonBoards().execute(command, range=args.board):
+            header('Executing on %r' % (result.board.name))
+            print(result.read().decode())
     elif args.operation == 'board-rename':
-        rename_board(args.board, args.name)
+        MicropythonBoard(args.board).rename(args.name)
     elif args.operation == 'board-list':
-        list_registered_boards()
+        format = "%-10.10s %-50.50s %-10.10s"
+        print(format % ('Platform', 'Name', 'State'))
+        for board in MicropythonBoards().all():
+            if board.state in ['idle']:
+                print(format % (board.platform, board.name, board.state))
     elif args.operation == 'board-upload':
-        copy_file_to_boards(hostlists.expand(args.board), args.filename, args.dest)
+        MicropythonBoards().upload(filename=args.filename, dest=args.dest, range=args.board)
+    elif args.operation == 'board':
+        if args.macro in MACROS.keys():
+            for result in MicropythonBoards().macro(macro=args.macro, args=args.arguments, range=args.board):
+                header('%r on %r' % (args.macro, result.board.name))
+                print(result.read().decode())
+        else:
+            print('No macro named %r' % args.macro)
     elif args.operation in ['server-shutdown', 'server-stop']:
         quit(args.rdbfile)
         sys.exit(0)

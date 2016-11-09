@@ -17,6 +17,22 @@ def send_key_value(socket, key, value):
     socket.send(key_value + b'\r\n')
 
 
+
+def copy_file_to_boards(boards, filename, dest=None):
+    if not dest:
+        dest = os.path.basename(filename)
+
+    file_key = upload_to_redis(filename)
+
+    for board in boards:
+        if board not in registered_boards():
+            print('board %r is not registered with cloudmanager' % board)
+            continue
+        transaction = create_file_transaction(board, file_key, dest)
+        print('copy {0} -> {1}:{2}'.format(filename, board, dest))
+        send_command(board, 'copy', transaction)
+
+
 def configure_device(config_dict, hostname=None, port=8266):
     if not hostname:
         hostname = '192.168.4.1'
