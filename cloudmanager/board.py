@@ -26,6 +26,10 @@ os.mkdir({args})
 """,
     'rmdir': """import os
 os.rmdir({args})
+""",
+    'mem_free': """import gc
+gc.collect()
+print(gc.mem_free())
 """
 }
 

@@ -118,7 +118,7 @@ if __name__ == "__main__":
         if args.macro in MACROS.keys():
             for result in MicropythonBoards().macro(macro=args.macro, args=args.arguments, range=args.board):
                 header('%r on %r' % (args.macro, result.board.name))
-                print(result.read().decode())
+                print(result.read().decode().strip())
         else:
             print('No macro named %r' % args.macro)
     elif args.operation in ['server-shutdown', 'server-stop']:
