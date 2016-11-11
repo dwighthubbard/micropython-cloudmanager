@@ -3,7 +3,9 @@ import hostlists
 import logging
 import multiprocessing
 import os
+import shutil
 import sys
+import tempfile
 import time
 from .exceptions import BoardNotResponding, NoSuchBoard
 from .utility import connect_to_redis, header
@@ -51,11 +53,13 @@ class MicropythonBoard(object):
     name = None
     platform = None
 
-    def __init__(self, name=None):
+    def __init__(self, name=None, redis_db=None):
         if isinstance(name, bytes):
             name = name.decode()
         self.name = name
-        self.redis_db = connect_to_redis()
+        self.redis_db = redis_db
+        if not redis_db:
+            self.redis_db = connect_to_redis()
         self.base_key = 'repl:' + self.name
         self.status_key = 'board:' + self.name
         self.console_key = self.base_key + '.console'
@@ -191,6 +195,11 @@ class MicropythonBoard(object):
         file_key = self.upload_to_redis(filename)
         transaction = self.create_file_transaction(file_key=file_key, dest=dest)
         self.send_command('copy', transaction)
+        count = 0
+        while self.state is 'idle' and count < 10:
+            count += 1
+        while self.state not in ['idle']:
+            time.sleep(.1)
 
 
 class MicropythonBoards(object):
@@ -201,7 +210,7 @@ class MicropythonBoards(object):
         boards = []
         for board_key in self.redis_db.keys('board:*'):
             name = board_key[6:]
-            boards.append(MicropythonBoard(name))
+            boards.append(MicropythonBoard(name, redis_db=self.redis_db))
         return boards
 
     def get(self, name):
@@ -262,3 +271,26 @@ class MicropythonBoards(object):
         # It would be better to yield results from a multiprocessing pool here
         for board in boards:
             board.upload(filename, dest)
+
+    def install(self, package_name, **kwargs):
+        cwd = os.getcwd()
+        tempdir = tempfile.mkdtemp()
+        os.chdir(tempdir)
+        command = 'pip install --prefix={tempdir} {package}'.format(
+            executable=sys.executable, tempdir=tempdir, package=package_name
+        )
+        print(command)
+        os.system(command)
+        for root, dirs, files in os.walk('.'):
+            for name in files:
+                filename = os.path.join(root, name)
+                if filename.endswith('.py'):
+                    if filename.startswith('./'):
+                        filename = filename[2:]
+                        dest = os.path.join('lib', '/'.join(filename.split('/')[3:]))
+                        # dest = os.path.join('lib', filename)
+                        print(filename, dest)
+                        self.upload(filename=filename, dest=dest, **kwargs)
+        os.chdir(cwd)
+        shutil.rmtree(tempdir)
+
