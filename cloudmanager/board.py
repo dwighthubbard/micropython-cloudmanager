@@ -280,6 +280,13 @@ class MicropythonBoards(object):
         cwd = os.getcwd()
         tempdir = tempfile.mkdtemp()
         os.chdir(tempdir)
+        package_version = None
+        temp = package_name.split('=')
+
+        package_name = temp[0]
+        if len(temp) == 2:
+            package_version = temp[-1]
+
         # command = 'pip install --prefix={tempdir} {package}'.format(
         #     executable=sys.executable, tempdir=tempdir, package=package_name
         # )
@@ -287,7 +294,8 @@ class MicropythonBoards(object):
         # output = subprocess.check_output(command.split())
         # os.system(command)
         package_info = self.get_pypi_info(package_name)
-        package_version = kwargs.get('package_version', package_info['info']['version'])
+        if not package_version:
+            package_version = package_info['info']['version']
         url = package_info['releases'][package_version]['url']
         response = requests.get(url)
         with open(os.path.basename(url), 'wb') as file_handle:
@@ -311,12 +319,6 @@ class MicropythonBoards(object):
 
 
     def get_pypi_info(self, package_name):
-        package_info = package_name.split('=')
-
-        package_version = None
-        package_name = package_info[0]
-        if len(package_info) == 2:
-            package_version = package_info[-1]
         url = 'https://pypi.python.org/pypi/{package}/json'.format(package=package_name)
         response = requests.get(url)
         return response.json()
