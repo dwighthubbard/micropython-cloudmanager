@@ -198,9 +198,7 @@ class MicropythonBoard(object):
         self.send_command('copy', transaction)
 
         print('Copying file to %r' % dest)
-        rc = None
-        while rc is None and self.state not in [None, 'idle', 'copying']:
-            rc = self.redis_db.blpop(self.complete_key, timeout=30)
+        rc = self.redis_db.blpop(self.complete_key, timeout=30)
 
 
 class MicropythonBoards(object):
