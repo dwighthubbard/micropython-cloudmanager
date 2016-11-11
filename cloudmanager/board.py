@@ -288,6 +288,7 @@ class MicropythonBoards(object):
                         filename = filename[2:]
                         dest = os.path.join('lib', '/'.join(filename.split('/')[3:]))
                         # dest = os.path.join('lib', filename)
+                        self.execute('print("Installing package: %s")\n' % package_name)
                         self.upload(filename=filename, dest=dest, **kwargs)
         os.chdir(cwd)
         shutil.rmtree(tempdir)
