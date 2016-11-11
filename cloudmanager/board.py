@@ -209,6 +209,7 @@ class MicropythonBoard(object):
 class MicropythonBoards(object):
     def __init__(self):
         self.redis_db = connect_to_redis()
+        self.installed_packages = []
 
     def all(self):
         boards = []
@@ -277,6 +278,8 @@ class MicropythonBoards(object):
             board.upload(filename, dest)
 
     def install(self, package_name, **kwargs):
+        if package_name in self.installed_packages:
+            return
         cwd = os.getcwd()
         tempdir = tempfile.mkdtemp()
         os.chdir(tempdir)
@@ -296,7 +299,7 @@ class MicropythonBoards(object):
         package_info = self.get_pypi_info(package_name)
         if not package_version:
             package_version = package_info['info']['version']
-        url = package_info['releases'][package_version]['url']
+        url = package_info['releases'][package_version][0]['url']
         response = requests.get(url)
         with open(os.path.basename(url), 'wb') as file_handle:
             file_handle.write(response.content)
@@ -305,15 +308,27 @@ class MicropythonBoards(object):
         tar.extractall()
         tar.close()
 
+        for pkg_dir in os.listdir('.'):
+            if os.path.isdir(pkg_dir):
+                break
+        os.chdir(pkg_dir)
+        self.installed_packages.append(package_name)
+        print('Installing package %r' % package_name)
         for root, dirs, files in os.walk('.'):
             for name in files:
                 filename = os.path.join(root, name)
-                if filename.endswith('.py'):
+                if name in ['setup.py', 'setup.cfg', 'PKG-INFO']:
+                    continue
+                if name in ['requires.txt']:
+                    for line in open(filename).readlines():
+                        self.install(line.strip(), **kwargs)
+                # if filename.endswith('.py'):
+                if '.egg-info/' not in filename:
                     if filename.startswith('./'):
                         filename = filename[2:]
-                        dest = os.path.join('lib', '/'.join(filename.split('/')[3:]))
-                        # dest = os.path.join('lib', filename)
-                        self.upload(filename=filename, dest=dest, **kwargs)
+                    dest = os.path.join('lib', filename)
+                    # print(filename, dest)
+                    self.upload(filename=filename, dest=dest, **kwargs)
         os.chdir(cwd)
         shutil.rmtree(tempdir)
 
@@ -322,33 +337,3 @@ class MicropythonBoards(object):
         url = 'https://pypi.python.org/pypi/{package}/json'.format(package=package_name)
         response = requests.get(url)
         return response.json()
-
-    def install_package(package_name):
-        package_info = package_name.split('=')
-        package_version = None
-        package_name = package_info[0]
-        if len(package_info) == 2:
-            package_version = package_info[-1]
-        url = 'https://pypi.python.org/pypi/{package}/json'.format(package=package_name)
-        response = requests.get(url)
-        package = response.json()
-        if not package_version:
-            package_version = package['info']['version']
-        url = package['releases'][package_version]['url']
-        with tempfile.TemporaryDirectory() as tempdir:
-            response = requests.get(url)
-            with open(os.path.basename(url), 'wb') as file_handle:
-                file_handle.write(response.content)
-            tar = tarfile.open(os.path.basename(url))
-            tar.extractall()
-            tar.close()
-
-            for root, dirs, files in os.walk('.'):
-                for name in files:
-                    filename = os.path.join(root, name)
-                    if filename.endswith('.py'):
-                        if filename.startswith('./'):
-                            filename = filename[2:]
-                            dest = os.path.join('lib', filename)
-                            print(filename)
-                            # MicropythonBoards().upload(filename=filename, dest=dest, range=range)
