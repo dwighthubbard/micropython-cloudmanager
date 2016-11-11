@@ -288,7 +288,6 @@ class MicropythonBoards(object):
                         filename = filename[2:]
                         dest = os.path.join('lib', '/'.join(filename.split('/')[3:]))
                         # dest = os.path.join('lib', filename)
-                        print(filename, dest)
                         self.upload(filename=filename, dest=dest, **kwargs)
         os.chdir(cwd)
         shutil.rmtree(tempdir)
