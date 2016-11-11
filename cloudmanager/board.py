@@ -195,13 +195,11 @@ class MicropythonBoard(object):
         file_key = self.upload_to_redis(filename)
         transaction = self.create_file_transaction(file_key=file_key, dest=dest)
         self.send_command('copy', transaction)
-        count = 0
-        while self.state is 'idle' and count < 10:
-            count += 1
-            time.sleep(.1)
-        print(self.state)
-        while self.state not in ['idle']:
-            time.sleep(.1)
+
+        print('Copying file to %r' % dest)
+        rc = None
+        while rc is None and self.state not in [None, 'idle']:
+            rc = self.redis_db.blpop(self.complete_key, timeout=30)
 
 
 class MicropythonBoards(object):
