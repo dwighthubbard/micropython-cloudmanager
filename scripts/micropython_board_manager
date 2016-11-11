@@ -49,6 +49,7 @@ if __name__ == "__main__":
     board_execute_parser = subparsers.add_parser('board-execute', help='Board execute')
     board_rename_parser = subparsers.add_parser('board-rename', help='Board rename')
     board_upload_parser = subparsers.add_parser('board-upload', help='Board upload')
+    board_install_parser = subparsers.add_parser('board-install', help='Install a package on a board')
 
     if platform == 'linux':
         board_configuration_parser = subparsers.add_parser('board-config', help='Board configuration')
@@ -77,6 +78,9 @@ if __name__ == "__main__":
     board_upload_parser.add_argument('board', default=None, help='Message to print on the console')
     board_upload_parser.add_argument('filename', help='File to upload')
     board_upload_parser.add_argument('dest', default=None, help='Destination directory')
+
+    board_install_parser.add_argument('board', default=None, help='Board(s) to install on')
+    board_install_parser.add_argument('package', default=None, help="Package to install")
 
     server_start_parser = subparsers.add_parser('server-start', help='Server start')
     server_start_parser.add_argument('--port', default='18266', type=int, help='Redis server port')
@@ -114,6 +118,8 @@ if __name__ == "__main__":
                 print(format % (board.platform, board.name, board.state))
     elif args.operation == 'board-upload':
         MicropythonBoards().upload(filename=args.filename, dest=args.dest, range=args.board)
+    elif args.operation == 'board-install':
+        MicropythonBoards().install(package_name=args.package, range=args.board)
     elif args.operation == 'board':
         if args.macro in MACROS.keys():
             for result in MicropythonBoards().macro(macro=args.macro, args=args.arguments, range=args.board):
