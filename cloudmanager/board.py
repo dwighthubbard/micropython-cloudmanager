@@ -196,8 +196,10 @@ class MicropythonBoard(object):
         transaction = self.create_file_transaction(file_key=file_key, dest=dest)
         self.send_command('copy', transaction)
         count = 0
-        while self.state is 'idle' and count < 10:
+        while self.state is 'idle' and count < 20:
             count += 1
+            time.sleep(.1)
+        print(self.state)
         while self.state not in ['idle']:
             time.sleep(.1)
 
