@@ -199,7 +199,7 @@ class MicropythonBoard(object):
 
         print('Copying file to %r' % dest)
         rc = None
-        while rc is None and self.state not in [None, 'idle']:
+        while rc is None and self.state not in [None, 'idle', 'copying']:
             rc = self.redis_db.blpop(self.complete_key, timeout=30)
 
 
