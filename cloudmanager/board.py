@@ -194,6 +194,7 @@ class MicropythonBoard(object):
     def upload(self, filename, dest):
         file_key = self.upload_to_redis(filename)
         transaction = self.create_file_transaction(file_key=file_key, dest=dest)
+        self.redis_db.delete(self.complete_key)
         self.send_command('copy', transaction)
 
         print('Copying file to %r' % dest)
