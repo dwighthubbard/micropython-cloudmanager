@@ -4,6 +4,7 @@ import logging
 import multiprocessing
 import os
 import shutil
+import subprocess
 import sys
 import tempfile
 import time
@@ -279,7 +280,8 @@ class MicropythonBoards(object):
             executable=sys.executable, tempdir=tempdir, package=package_name
         )
         print(command)
-        os.system(command)
+        # os.system(command)
+        output = subprocess.check_output(command.split())
         for root, dirs, files in os.walk('.'):
             for name in files:
                 filename = os.path.join(root, name)
@@ -288,7 +290,6 @@ class MicropythonBoards(object):
                         filename = filename[2:]
                         dest = os.path.join('lib', '/'.join(filename.split('/')[3:]))
                         # dest = os.path.join('lib', filename)
-                        self.execute('print("Installing package: %s")\n' % package_name)
                         self.upload(filename=filename, dest=dest, **kwargs)
         os.chdir(cwd)
         shutil.rmtree(tempdir)
