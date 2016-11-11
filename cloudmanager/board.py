@@ -197,7 +197,7 @@ class MicropythonBoard(object):
         self.redis_db.delete(self.complete_key)
         self.send_command('copy', transaction)
 
-        print('Copying file to %r' % dest)
+        print('Copying file to %s:%s' % (self.name, dest))
         rc = self.redis_db.blpop(self.complete_key, timeout=30)
 
 
