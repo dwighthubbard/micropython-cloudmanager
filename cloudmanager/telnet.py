@@ -35,7 +35,7 @@ def echo_output(output, echo=False):
     print(output, end='')
 
 
-def get_authenticated_connection(echo=False, hostname=None):
+def get_authenticated_connection(echo=False, hostname='192.168.1.1', username='micro', password='python'):
     """
     Get a telnet connection to the wipy and authenticate
     with the username and password from the settings.
@@ -54,11 +54,6 @@ def get_authenticated_connection(echo=False, hostname=None):
     telnetlib.Telnet
         Returns a telnetlib.Telnet connection object
     """
-    settings = get_config_settings()
-    username = settings['username'].encode()
-    password = settings['password'].encode()
-    if not hostname:
-        hostname = settings['hostname']
     tn = telnetlib.Telnet()
     tn.open(hostname)
     echo_output(tn.read_until(b"Login as: ", timeout=2).decode(), echo)

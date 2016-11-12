@@ -8,6 +8,7 @@ import shutil
 import subprocess
 import sys
 import tarfile
+import telnetlib
 import tempfile
 import time
 from .exceptions import BoardNotResponding, NoSuchBoard
@@ -24,7 +25,9 @@ print('resetting{args}')
 machine.reset()
 """,
     'ls': """import os
-print(os.listdir({args}))
+directory = {args}
+for line in os.listdir(directory):
+    print(line.strip())
 """,
     'mkdir': """import os
 os.mkdir({args})
@@ -50,6 +53,72 @@ class ExecuteResult(object):
         if num_bytes > 0 and len(result) < num_bytes:
             self.position += len(result)
         return result
+
+
+class ExecuteResultTelnet(ExecuteResult):
+    username='micro'
+    password='python'
+    hostname='192.168.1.1'
+    _tn = None
+    def __init__(self, board, **kwargs):
+        self.username = kwargs.get('username', self.username)
+        self.password = kwargs.get('password', self.password)
+        self.hostname = kwargs.get('hostname', self.hostname)
+        self._tn = self._get_authenticated_connection(
+            hostname=self.hostname, username=self.username, password=self.password
+        )
+        super(ExecuteResultTelnet, self).__init__(board, return_code=kwargs.get('return_code', None))
+
+    def _echo_output(self, output, echo=False):
+        """
+        Print output if echo is True
+
+        Parameters
+        ----------
+        output : str
+            The output to echo
+
+        echo : bool
+            Flag to indicate if the output should be displayed.
+            Default: False
+        """
+        if not echo:
+            return
+        print(output, end='')
+
+    def _get_authenticated_connection(self, echo=False, hostname='192.168.1.1', username='micro', password='python'):
+        """
+        Get a telnet connection to the wipy and authenticate
+        with the username and password from the settings.
+
+        Parameters
+        ----------
+        echo : bool
+            Echo connection output.  Default=False
+
+        hostname : str,optional
+            The hostname or IP address to connect to.  If not provided
+            will use the value from the sttings.
+
+        Returns
+        -------
+        telnetlib.Telnet
+            Returns a telnetlib.Telnet connection object
+        """
+        tn = telnetlib.Telnet()
+        tn.open(hostname)
+        self._echo_output(tn.read_until(b"Login as: ", timeout=2).decode(), echo)
+        time.sleep(.5)
+        tn.write(username.encode() + b'\r')
+        self._echo_output(tn.read_until(b'assword: ', timeout=2).decode(), echo)
+        time.sleep(.5)
+        tn.write(password.encode() + b'\r')
+        self._echo_output(tn.read_until(b'>>> ', timeout=2).decode(), echo)
+        self._echo_output(tn.read_very_eager().decode(), echo)
+        return tn
+
+    def read(self, num_bytes=-1):
+        return self._tn.read_very_eager()
 
 
 class MicropythonBoard(object):
@@ -146,9 +215,15 @@ class MicropythonBoard(object):
 
         self.redis_db.delete(self.stdout_key)
         self.redis_db.delete(self.complete_key)
+
+        if self.platform.lower() in ['wipy']:
+            hostname = self.redis_db.get(self.console_key)
+            telnet_results = ExecuteResultTelnet(board=self, hostname=hostname)
+
         self.redis_db.rpush(command_key, command)
         self.redis_db.expire(command_key, 10)
         self.redis_db.expire(self.status_key, 10)
+
 
         rc = None
         while rc is None:
@@ -160,6 +235,9 @@ class MicropythonBoard(object):
             if not self.state or self.state in ['idle']:
                 raise BoardNotResponding('Board {0} is not responding\n'.format(self.name))
 
+        if self.platform.lower() in ['wipy']:
+            telnet_results.return_code = rc
+            return telnet_results
         return ExecuteResult(board=self, return_code=rc)
 
     def macro(self, macro, args=''):
