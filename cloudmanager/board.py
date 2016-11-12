@@ -23,21 +23,37 @@ MACROS = {
     'reset': """import machine
 print('resetting{args}')
 machine.reset()
+
 """,
     'ls': """import os
-directory = {args}
-for line in os.listdir(directory):
+for line in os.listdir({args}):
     print(line.strip())
+
 """,
     'mkdir': """import os
 os.mkdir({args})
+
 """,
     'rmdir': """import os
 os.rmdir({args})
+
 """,
     'mem_free': """import gc
 gc.collect()
 print(gc.mem_free())
+
+""",
+    'set': """from bootconfig.config import set
+key, value={args}.split('=')
+set(key, value)
+
+""",
+    'settings': """from bootconfig.config import list_settings
+list_settings()
+""",
+    'uname': """import os
+print(os.uname())
+
 """
 }
 

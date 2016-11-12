@@ -2,12 +2,32 @@
 from __future__ import print_function
 import daemon
 import logging
+import netifaces
 import time
 import redislite
 
 
 LOG = logging.getLogger('cloudmanager_server')
 STATUS_KEY = 'cloudmanager_server:status'
+
+
+def get_service_addresses():
+    listen_addresses = []
+    for interface in netifaces.interfaces():
+        if interface in ['docker0']:
+            continue
+        addresses = netifaces.ifaddresses(interface).get(netifaces.AF_INET, [])
+        # Netifaces is returning funny values for ipv6 addresses, disabling for now
+        # addresses += netifaces.ifaddresses(interface).get(netifaces.AF_INET6, [])
+        if not addresses:
+            continue
+        for address in addresses:
+            if 'peer' in address.keys():
+                continue
+            if address['addr'] in ['::1', '127.0.0.1']:
+                continue
+            listen_addresses.append(address['addr'])
+    return listen_addresses
 
 
 def run_server(port, rdb_file=None):
@@ -23,6 +43,9 @@ def run_server(port, rdb_file=None):
         The redis rdb file to use, default None
     """
     connection = redislite.Redis(dbfilename=rdb_file, serverconfig=dict(port=port))
+    listen_addresses = get_service_addresses()
+    if listen_addresses:
+        print('Cloudmanager service is listening on:', ','.join([addr+':'+str(port) for addr in listen_addresses]))
     with daemon.DaemonContext():
         monitor_server(connection)
 

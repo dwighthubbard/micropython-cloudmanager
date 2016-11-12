@@ -26,6 +26,7 @@ Configure the cloudclient on the micropython boards to talk to the service
 
 Install and configure the micropython-redis-cloudclient_ on the micropython boards to be managed.
 
+For esp8266 boards such as nodemcu, wemos-d1 boards the easiest method 
 Using the directions at https://github.com/dwighthubbard/micropython-redis-cloudclient/blob/master/README.md
 
 List the boards

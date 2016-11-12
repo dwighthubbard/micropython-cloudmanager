@@ -1,8 +1,11 @@
 Design
 ======
 
-Cloudmanager uses a central management hub that accepts connections from clients and relays requests from the management API to the clients.
+Cloudmanager uses a central management hub that relays requests
+from the management api to the clients.
 
-All incoming connections flow through the management hub, the micropython client connects to the management hub and receives commands through that connection.
+All clients of the cloudmanager connect in to the central cloudmanager
+server.
 
 ![Architecture Diagram](static/architecture.png)
+
