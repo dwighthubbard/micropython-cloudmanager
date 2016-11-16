@@ -22,6 +22,9 @@ if logger_name == '__main__':
 logger = logging.getLogger(logger_name)
 
 
+RDB_FILE = '/var/tmp/cloudmanager.rdb'
+
+
 class ConnectionError(Exception):
     pass
 
@@ -84,13 +87,13 @@ if __name__ == "__main__":
 
     server_start_parser = subparsers.add_parser('server-start', help='Server start')
     server_start_parser.add_argument('--port', default='18266', type=int, help='Redis server port')
-    server_start_parser.add_argument('--rdbfile', default='cloudmanager.rdb', help='Redis server rdb backing file')
+    server_start_parser.add_argument('--rdbfile', default=RDB_FILE, help='Redis server rdb backing file')
 
     server_stop_parser = subparsers.add_parser('server-stop', help='Stop server')
-    server_stop_parser.add_argument('--rdbfile', default='cloudmanager.rdb', help='Redis server rdb backing file')
+    server_stop_parser.add_argument('--rdbfile', default=RDB_FILE, help='Redis server rdb backing file')
 
     server_status_parser = subparsers.add_parser('server-status', help='Server status')
-    server_status_parser.add_argument('--rdbfile', default='cloudmanager.rdb', help='Redis server rdb backing file')
+    server_status_parser.add_argument('--rdbfile', default=RDB_FILE, help='Redis server rdb backing file')
 
     args = parser.parse_args()
     if args.operation == 'board-configure':

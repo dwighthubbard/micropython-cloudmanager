@@ -1,0 +1,69 @@
+#!/usr/bin/env python
+from __future__ import print_function
+import logging
+import os
+import time
+
+from cloudmanager.board import MicropythonBoards, MicropythonBoard
+from watchdog.observers import Observer
+from watchdog.events import FileSystemEventHandler
+
+
+LOG = logging.getLogger(__name__)
+
+
+class BoardHandler(FileSystemEventHandler):
+    def __init__(self, *args, **kwargs):
+        self.watch_directory = kwargs.get('watch_directory', '/tmp/mbm')
+        super(BoardHandler, self).__init__(*args, **kwargs)
+
+    def relative_filename(self, filename):
+        return filename[len(self.watch_directory):].lstrip('/')
+
+    def file_name(self, filename):
+        return '/'.join(self.relative_filename(filename).split('/')[1:])
+
+    def get_board_for_file(self, filename):
+        board_name = self.relative_filename(filename).split('/')[0]
+        board = MicropythonBoard(board_name)
+        return board
+
+    def on_any_event(self, event):
+        if event.is_directory:
+            return None
+
+        elif event.event_type == 'created':
+            print("Received created event - %s" % event.src_path)
+
+        elif event.event_type == 'modified':
+            print("Received modified event - %s" % event.src_path)
+            board = self.get_board_for_file(event.src_path)
+            board.upload(event.src_path, self.file_name(event.src_path))
+
+        elif event.event_type == 'moved':
+            print("Received moved event - %s" % event.src_path)
+
+        elif event.event_type == 'deleted':
+            print("Received deleted event - %s" % event.src_path)
+            self.get_board_for_file(event.src_path).execute("import os;os.remove(%s)\n" % repr(self.file_name(event.src_path)))
+            print('Deleted file: %s' % self.file_name(event.src_path))
+
+if __name__ == "__main__":
+    path = '/tmp/mbm'
+
+    for board in MicropythonBoards().all():
+        board_directory = os.path.join(path, board.name)
+        if not os.path.exists(board_directory):
+            os.makedirs(board_directory)
+
+    event_handler = BoardHandler()
+    observer = Observer()
+    observer.schedule(event_handler, path, recursive=True)
+    observer.start()
+
+    try:
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        observer.stop()
+    observer.join()
