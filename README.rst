@@ -8,52 +8,80 @@ Description
 
 Cloudmanager is an infrastructure to manage multiple IoT boards running micropython.
 
-Design Philosophy
-=================
+Quickstart
+==========
 
-Here are the overall design concepts that are the focus of the cloudmanger.  Which helps to explain it's purpose and
-some guidance on where it is going in the future.
+Here is a quickstart for setting up cloudmanager with popular esp8266 boards
 
-All Python Infrastructure
--------------------------
+Install
+-------
 
-If a programmer is writing code to operate on boards running Micropython.  It is desirable to be able to also write
-the service management code in the same language.
+Use pip to install the server and client flash utility::
 
-Simple to set up a basic configuration
---------------------------------------
+    $ pip install micropython-cloudmanager micropython-cloudmanager-esp8266
+    $
 
-A goal of this service is to be simple to set up a basic functional configuration.
+Start Server
+------------
 
-To meet this goal the command line interface tool has commands to start/stop and check the status of the service
-with reasonable defaults without any other configuration or setup.
+Start the server process with the default settings::
 
-In addition we provide a seperate flash utility that will flash popular esp8266 boards with micropython and configure them
-as cloudmanager clients with a single command.
+    $ mbm server-start
+    Cloudmanager service is listening on: 192.168.1.127:18266
+    $
 
-Architecture to minimize security attack surface
-------------------------------------------------
+Flash and Configure esp8266 board as a client
+---------------------------------------------
 
-Security is important and when new security attacks occur frequently new code has to be added to deal with the issues.
-This can be difficult to do when the code to handle the attack has to be implemented on an IoT board with little free
-memory.
+Plug in the esp8266 board, into the usb port.  Some boards may need to be manually put into flash mode per the vendor
+instructions.
 
-To address this issue, the cloudmanager is designed to have a single netowrk entrypoint that accepts incomming network
-connections.
+The flash tool will generally determine the correct serial device to flash as long as only one usb serial device
+is connected to the system.
 
-This provides a single network point to secure, which provides a number of benefits.
+Flash and configure the board specifying the cloudmanager server address::
 
-    * It minimizing the attack surface.
-    * Lessens requirements to update IoT board software for security issues
-    * It moves most of the processing for authentication, and input validation to the cloudmanager service node which generally will have significantly more resources to handle secufity issues properly.
+    $ flash_esp_image --wifi_ssid mywifi --wifi_password mywifipassword --cloudmanager_server 192.168.1.127
+    esptool.py --port /dev/ttyUSB0 --baud 115200 erase_flash
+    esptool.py v1.2.1
+    Connecting...
+    Running Cesanta flasher stub...
+    Erasing flash (this may take a while)...
+    Erase took 9.0 seconds
+    esptool.py --port /dev/ttyUSB0 --baud 115200 write_flash --verify --flash_size=32m --flash_mode=qio 0 /tmp/cloudmanager-micropython-esp8266/local/lib/python2.7/site-packages/cloudmanager_micropython_esp8266/firmware/firmware-combined.bin
+    esptool.py v1.2.1
+    Connecting...
+    Running Cesanta flasher stub...
+    Flash params set to 0x0040
+    Writing 557056 @ 0x0... 557056 (100 %)
+    Wrote 557056 bytes at 0x0 in 48.3 seconds (92.3 kbit/s)...
+    Leaving...
+    Verifying just-written flash...
+    Verifying 0x8734c (553804) bytes @ 0x00000000 in flash against /tmp/cloudmanager-micropython-esp8266/local/lib/python2.7/site-packages/cloudmanager_micropython_esp8266/firmware/firmware-combined.bin...
+    -- verify OK (digest matched)
+    >>>
+    >>> import os
+    >>> os.mkdir('etc')
+    >>> from bootconfig.config import get, set
+    >>> set('wifi_ssid', 'mywifi')
+    >>> set('wifi_password', 'mywifipassword')
+    >>> set('redis_server', '192.168.1.127')
+    >>> import bootconfig.service
+    >>> bootconfig.service.autostart()
+    >>> import redis_cloudclient.service
+    >>> redis_cloudclient.service.autostart()
+    >>> import machine
+    >>> machine.reset()
 
-Do resource intensive operations on the server not the IoT devices
-------------------------------------------------------------------
 
-The client should provide the minimum functionality needed to implement the functionality.  In addition functionality
-should be added with a focus on performing resource intensive operation on the managment nodes and not on the IoT
-boards that have minimal resources.
+Verify the board is registered with the server
+----------------------------------------------
 
-For example, the **mbm board-install** command installs micropython packages on boards.  The implementation of this
-functionality performs the resource intensive download, unpack, and dependency handling on the cloudmanager server.  The
-only function performed on the board is the upload to the appropriate location in the boards filesystem.
+After a few seconds the board should connect to the wifi network and register with the cloudmanager server::
+
+    $ mbm board-list
+    Name       Platform                                           State
+    esp8266-1  esp8266                                            idle
+    $
+
+See the full documentation to use cloudmanager to install packages, upload files or execute commands on the board.
