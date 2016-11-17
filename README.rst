@@ -33,15 +33,16 @@ Start the server process with the default settings::
 Flash and Configure esp8266 board as a client
 ---------------------------------------------
 
-Plug in the esp8266 board, into the usb port.  Some boards may need to be manually put into flash mode per the vendor
-instructions.
+Plug in the esp8266 board, into the usb port.
+
+NOTE: Some boards may need to be manually put into flash mode per the vendor instructions.
 
 The flash tool will generally determine the correct serial device to flash as long as only one usb serial device
 is connected to the system.
 
-Flash and configure the board specifying the cloudmanager server address::
+Flash and configure the board specifying the wifi connection settings::
 
-    $ flash_esp_image --wifi_ssid mywifi --wifi_password mywifipassword --cloudmanager_server 192.168.1.127
+    $ flash_esp_image --wifi_ssid mywifi --wifi_password mywifipassword
     esptool.py --port /dev/ttyUSB0 --baud 115200 erase_flash
     esptool.py v1.2.1
     Connecting...
@@ -73,6 +74,8 @@ Flash and configure the board specifying the cloudmanager server address::
     >>> import machine
     >>> machine.reset()
 
+
+NOTE: At this point some boards need to be manually reset.
 
 Verify the board is registered with the server
 ----------------------------------------------
