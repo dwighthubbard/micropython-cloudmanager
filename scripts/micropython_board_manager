@@ -112,10 +112,17 @@ if __name__ == "__main__":
         MicropythonBoard(args.board).rename(args.name)
     elif args.operation == 'board-list':
         format = "%-10.10s %-50.50s %-10.10s"
-        print(format % ('Platform', 'Name', 'State'))
+        print(format % ('Name', 'Platform', 'State'))
+        all_boards = {}
         for board in MicropythonBoards().all():
+            all_boards[board.name] = board
+
+        name_list = list(all_boards.keys())
+        name_list.sort()
+        for name in name_list:
+            board = all_boards[name]
             if board.state in ['idle']:
-                print(format % (board.platform, board.name, board.state))
+                print(format % (board.name, board.platform, board.state))
     elif args.operation == 'board-upload':
         MicropythonBoards().upload(filename=args.filename, dest=args.dest, range=args.board)
     elif args.operation == 'board-install':
