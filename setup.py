@@ -8,8 +8,7 @@ from setuptools import setup
 setup(
     name='micropython-cloudmanager',
     description='Micropython client that allows network attached boards to be controlled from a central redis server',
-    long_description="""Provides a client that allows one a network capable micropython board to
-interface with a central redis server.""",
+    long_description=open('README.rst').read(),
     url='https://github.com/dhubbard/micropython-cloudmanager',
     author='Dwight Hubbard',
     author_email="dwight@dwighthubbard.com",
@@ -19,6 +18,6 @@ interface with a central redis server.""",
     maintainer_email='dwight@dwighthubbard.com',
     packages=['cloudmanager'],
     scripts=['scripts/micropython_board_manager', 'scripts/mbm'],
-    version='0.0.102',
+    version='0.0.103',
     zip_safe=True,
 )
