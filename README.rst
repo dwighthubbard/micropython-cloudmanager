@@ -6,7 +6,8 @@
 Description
 ***********
 
-Cloudmanager is an infrastructure to manage multiple IoT boards running micropython.
+Cloudmanger provides a single point of managment for micropython systems that minimizes the security attack surface and
+offloads resource intensive operations from the micropython clients to the server.
 
 Quickstart
 ==========
