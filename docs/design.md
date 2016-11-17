@@ -8,4 +8,3 @@ All clients of the cloudmanager connect in to the central cloudmanager
 server.
 
 ![Architecture Diagram](static/architecture.png)
-

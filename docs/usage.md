@@ -1,38 +1,58 @@
-# Usage
+# Command Line Interface
 
-The micropython cloud manager is managaed using the `mbm` command line utility on the main service host.
+The micropython cloud manager command line interface is managaed using the 
+`mbm` command line utility on the main service host.
 
-The `mbm` utility supports managing the cloud service as well as performing operations on boards running micropython
-that are connecting to the cloud management server.
+The `mbm` utility supports managing the cloud service as well as performing 
+operations on boards running micropython that are connecting to the cloud 
+management server.
 
-
-## Service Commands
+## Cloudmanager Service Management Comands
 
 Before any commands can be run the service needs to be available.
 
 ### service-start
 
-This command will start the cloudmanager service as a daemon process running as the user that starts it.
+This command will start the cloudmanager service as a daemon process running 
+as the user that starts it.
+
+    $ mbm server-start
+    Cloudmanager service is listening on: 192.168.1.127:18266
+    $ 
+    
 
 ### service-stop
 
 This command stops the running cloudmanager service.
 
+    $ mbm server-stop
+    Service is shutdown
+    $ 
+
 ### service-status
 
 This command shows the status of the cloudmanager service.
 
-## Board Operation Commands
+    $ mbm server-status
+    Running
+    $ 
+
+## Cloudmanager Board (client) commands
+
+The Cloudmanager board commands are used to interact with boards running the
+cloudmanager client.
 
 ### board-scan
 
-The board-scan command will scan for unconfigured micropython boards running the cloudclient.
+The board-scan command will scan for unconfigured micropython boards running the 
+cloudclient.
 
 **Note** - This command currently only works on Linux
 
 ### board-list
 
-The board-list command shows all boards that are registered with the cloudmanager service.
+The board-list command shows all boards that are registered with the cloudmanager 
+service.
 
 ### board-print
 

@@ -3,6 +3,14 @@
     :alt: Documentation Status
 ==================================================================
 
+
+
+Requirements
+============
+
+The micropython-cloudmanager does not currently have the security and validation functionality implemented.  As a
+result it should only be used on isolated secure networks.
+
 Install
 =======
 
@@ -13,6 +21,7 @@ However some functionality is only available when running on a fairly current Li
 The micropython-cloudmanager is easiest to install from pypi with pip::
 
     pip install micropython-cloudmanager
+
 
 Start the service
 *****************

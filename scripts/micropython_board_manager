@@ -12,7 +12,7 @@ import hostlists
 from cloudmanager.board import MicropythonBoards, MicropythonBoard, MACROS
 from cloudmanager.configure_device import active_connection_nmcli, active_connection_password_nmcli, \
     active_connection_field_nmcli, action_configure_device, scan_for_micropython_boards
-from cloudmanager.server import run_server, quit, status
+from cloudmanager.server import RDB_FILE, run_server, quit, status
 from cloudmanager.utility import header
 
 
@@ -20,9 +20,6 @@ logger_name = __name__
 if logger_name == '__main__':
     logger_name = os.path.basename(sys.argv[0])
 logger = logging.getLogger(logger_name)
-
-
-RDB_FILE = '/var/tmp/cloudmanager.rdb'
 
 
 class ConnectionError(Exception):
@@ -131,10 +128,19 @@ if __name__ == "__main__":
         else:
             print('No macro named %r' % args.macro)
     elif args.operation in ['server-shutdown', 'server-stop']:
-        quit(args.rdbfile)
+        try:
+            quit(args.rdbfile)
+            print('Service is shutdown')
+        except ValueError:
+            print('Server shutdown failed')
+            sys.exit(1)
         sys.exit(0)
     elif args.operation == 'server-status':
-        status(args.rdbfile)
+        current_status = status(args.rdbfile)
+        if current_status:
+            print(current_status)
+        else:
+            print('Server is not running')
         sys.exit(0)
     elif args.operation in ['server-start']:
         run_server(args.port, args.rdbfile)

@@ -8,6 +8,7 @@ import redislite
 
 
 LOG = logging.getLogger('cloudmanager_server')
+RDB_FILE = '/var/tmp/cloudmanager.rdb'
 STATUS_KEY = 'cloudmanager_server:status'
 
 
@@ -42,6 +43,8 @@ def run_server(port, rdb_file=None):
     rdb_file : str, optional
         The redis rdb file to use, default None
     """
+    if not rdb_file:
+        rdb_file = RDB_FILE
     connection = redislite.Redis(dbfilename=rdb_file, serverconfig=dict(port=port))
     listen_addresses = get_service_addresses()
     if listen_addresses:
@@ -72,8 +75,16 @@ def quit(rdb_file=None):
     rdb_file : str, optional
         The redis rdb_file, default=None
     """
-    connection = redislite.Redis(dbfilename=rdb_file)
-    connection.setex(STATUS_KEY, b'quit', 10)
+    if not rdb_file:
+        rdb_file = RDB_FILE
+    retry_count = 10
+    while retry_count and status(rdb_file):
+        connection = redislite.Redis(dbfilename=rdb_file)
+        connection.setex(STATUS_KEY, b'quit', 10)
+        retry_count -= 1
+        time.sleep(1)
+    if retry_count == 0:
+        raise ValueError('Server shutdown failed')
 
 
 def status(rdb_file):
@@ -85,9 +96,9 @@ def status(rdb_file):
     rdb_file : str, optional
         The redis rdb_file, default=None
     """
+    if not rdb_file:
+        rdb_file = RDB_FILE
     connection = redislite.Redis(dbfilename=rdb_file)
     status = connection.get(STATUS_KEY)
     if status:
-        print(status.decode())
-        return
-    print('Not running')
+        return status.decode()
