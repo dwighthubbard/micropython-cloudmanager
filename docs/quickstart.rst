@@ -40,13 +40,11 @@ List the boards
 The `mbm board-list` command will list the boards that have registered with the cloudmanager service::
 
     $ mbm board-list
-    Platform   Name                                               State
-    esp8266    micropython-esp8266-f1fa9e                         idle
-    esp8266    nodemcu-001                                        idle
-    esp8266    nodemcu-002                                        idle
-    esp8266    wemos-001                                          idle
-    WiPy       wipy2-001                                          idle
-    WiPy       wipy2-002                                          idle
+    Name       Platform                                           State
+    esp8266-1  esp8266                                            idle
+    esp8266-2  esp8266                                            idle
+    esp8266-3  esp8266                                            idle
+    wipy2-1    WiPy                                               idle
     $
 
 Run a command on some boards
@@ -57,10 +55,10 @@ The `mbm board-execute` command will send the commands from standard input to on
 Run the `mbm board-execute [boardname]` command, then type the code to execute and hit **CTRL-D** and the code will
 be sent to he board(s), executed and the results displayed::
 
-    $ mbm board-execute micropython-esp8266-f1fa9e
+    $ mbm board-execute esp8266-2
     import os
     print(os.uname())
-    ## Executing on 'micropython-esp8266-f1fa9e' #################################
+    ## Executing on 'esp8266-2' #################################
     (sysname='esp8266', nodename='esp8266', release='1.5.4(baaeaebb)', version='v1.8.5-100-g10bde69-dirty on 2016-11-01', machine='ESP module with ESP8266')
 
     $
@@ -70,19 +68,20 @@ Upload a file to some boards
 
 The `mbm board-upload` command will upload a file to one or more boards.
 
-So for example to copy the file "hello_world.py" to the lib (module) directory on 2 boards works like this (note, wipy boards will execute commands but currently do not return output)::
+So for example to copy the file "hello_world.py" to the lib (module) directory on 2 boards works like this::
 
-    $ mbm board-upload nodemcu-00[1-2],wipy2-001 hello_world.py lib/hello_world.py
-    $ mbm board-execute nodemcu-00[1-2],wipy2-001
+    $ mbm board-upload esp8266-[1-2],wipy2-1 hello_world.py lib/hello_world.py
+    $ mbm board-execute esp8266-[1-2],wipy2-1
     import hello_world
     hello_world.hello_world()
-    ## Executing on 'nodemcu-001' ################################################
+    ## Executing on 'esp8266-1' ################################################
     Hello World!
 
-    ## Executing on 'nodemcu-002' ################################################
+    ## Executing on 'esp8266-2' ################################################
     Hello World!
 
-    ## Executing on 'wipy2-001' ##################################################
+    ## Executing on 'wipy2-1' ###################################################
+    Hello World!
 
     $
 
