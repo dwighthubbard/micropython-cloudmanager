@@ -60,7 +60,7 @@ def wait_for_exit(observer, path):
     try:
         while True:
             time.sleep(5)
-            redis_db.setex('mbm_sync:heartbeat', 10)
+            redis_db.setex('mbm_sync:heartbeat', 'ok', 10)
             new_boards = set(board_names())
             for board in new_boards.difference(boards):
                 logger.info('Found new board %r', board)
