@@ -56,27 +56,23 @@ class BoardHandler(FileSystemEventHandler):
 
 def wait_for_exit(observer, path):
     redis_db = connect_to_redis()
-    boards = MicropythonBoards(redis_db=redis_db)
-    board_names = set([board.name for board in boards.all()])
+    micropython_boards = MicropythonBoards(redis_db=redis_db)
+    board_names = set([board.name for board in micropython_boards.all()])
     try:
         while True:
             time.sleep(1)
             redis_db.setex('mbm_sync:heartbeat', 'ok', 10)
-            new_boards = set([board.name for board in boards.all()])
+            new_boards = set([board.name for board in micropython_boards.all()])
             for board in new_boards.difference(board_names):
                 logger.info('Found new board %r', board)
                 create_sync_directory(board, path)
             for board in board_names.difference(new_boards):
                 logger.warn('Board %r has gone away', board)
-            boards = new_boards
+            board_names = new_boards
     except KeyboardInterrupt:
         observer.stop()
     redis_db.delete('mbm_sync:heartbeat')
     observer.join()
-
-
-def board_names():
-    return [board.name for board in MicropythonBoards().all()]
 
 
 def create_sync_directory(board, path):
