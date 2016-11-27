@@ -61,7 +61,7 @@ def wait_for_exit(observer, path):
             new_boards = set(board_names())
             for board in new_boards.difference(boards):
                 logger.info('Found new board %r', board)
-                create_sync_directory(MicropythonBoard(board))
+                create_sync_directory(board, path)
             boards = new_boards
     except KeyboardInterrupt:
         observer.stop()
@@ -80,7 +80,7 @@ def create_sync_directory(board, path):
     ----------
     board : cloudmanager Board Object
     """
-    board_directory = os.path.join(path, board.name)
+    board_directory = os.path.join(path, board)
     if not os.path.exists(board_directory):
         logger.info('Creating Board Sync Directory: %s', board_directory)
         os.makedirs(board_directory)
@@ -90,7 +90,7 @@ def create_sync_directories(path):
     if not os.path.exists(path):
         os.makedirs(path)
     for board in MicropythonBoards().all():
-        create_sync_directory(board, path)
+        create_sync_directory(board.name, path)
 
 
 def main(path):
