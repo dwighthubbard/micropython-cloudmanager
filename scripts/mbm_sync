@@ -2,7 +2,6 @@
 from __future__ import print_function
 import daemon
 import logging
-import logging.handlers
 import os
 import time
 
