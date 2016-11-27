@@ -80,9 +80,7 @@ def create_sync_directory(board, path):
 def create_sync_directories(path):
     if not os.path.exists(path):
         os.makedirs(path)
-    boards = MicropythonBoards().all()
-
-    for board in boards:
+    for board in MicropythonBoards().all():
         create_sync_directory(board, path)
 
 
@@ -100,5 +98,4 @@ def main(path):
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
     main('/tmp/mbm')
