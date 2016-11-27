@@ -17,7 +17,7 @@ setup(
     maintainer='Dwight Hubbard',
     maintainer_email='dwight@dwighthubbard.com',
     packages=['cloudmanager'],
-    scripts=['scripts/micropython_board_manager', 'scripts/mbm'],
-    version='0.0.108',
+    scripts=['scripts/micropython_board_manager', 'scripts/mbm', 'scripts/mbm_sync'],
+    version='0.0.109',
     zip_safe=True,
 )
