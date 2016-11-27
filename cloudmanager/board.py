@@ -302,8 +302,10 @@ class MicropythonBoard(object):
 
 
 class MicropythonBoards(object):
-    def __init__(self):
-        self.redis_db = connect_to_redis()
+    def __init__(self, redis_db=None):
+        self.redis_db = redis_db
+        if not self.redis_db:
+            self.redis_db = connect_to_redis()
         self.installed_packages = []
 
     def all(self):
