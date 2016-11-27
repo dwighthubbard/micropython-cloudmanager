@@ -2,7 +2,7 @@
 from __future__ import print_function
 # import daemon
 import logging
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 import os
 import time
 
