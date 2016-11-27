@@ -107,8 +107,9 @@ def main(path):
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG, filename='mbm_sync.log')
+    logging.basicConfig(level=logging.INFO, filename='mbm_sync.log')
     preserve = [handler.stream.fileno() for handler in logging.root.handlers]
     logger.info(preserve)
     with daemon.DaemonContext(files_preserve=preserve):
+        logger.info('Monitoring /tmp/mbm for items to sync')
         main('/tmp/mbm')
