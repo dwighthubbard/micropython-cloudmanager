@@ -109,8 +109,10 @@ def main(path):
     observer = Observer()
     observer.schedule(event_handler, path, recursive=True)
     observer.start()
-
-    wait_for_exit(observer, path)
+    try:
+        wait_for_exit(observer, path)
+    except:
+        logger.exception('Got an exception')
 
 
 if __name__ == "__main__":
