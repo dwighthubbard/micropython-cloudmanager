@@ -54,13 +54,22 @@ class BoardHandler(FileSystemEventHandler):
 
 
 def wait_for_exit(observer, path):
+    boards = set(board_names())
     try:
         while True:
             time.sleep(5)
-            create_sync_directories(path)
+            new_boards = set(board_names())
+            for board in new_boards.difference(boards):
+                logger.info('Found new board %r', board)
+                create_sync_directory(MicropythonBoard(board))
+            boards = new_boards
     except KeyboardInterrupt:
         observer.stop()
     observer.join()
+
+
+def board_names():
+    return [board.name for board in MicropythonBoards.all()]
 
 
 def create_sync_directory(board, path):
