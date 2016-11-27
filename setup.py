@@ -18,6 +18,6 @@ setup(
     maintainer_email='dwight@dwighthubbard.com',
     packages=['cloudmanager'],
     scripts=['scripts/micropython_board_manager', 'scripts/mbm', 'scripts/mbm_sync'],
-    version='0.0.130',
+    version='0.0.131',
     zip_safe=True,
 )
