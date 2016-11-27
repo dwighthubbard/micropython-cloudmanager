@@ -61,6 +61,8 @@ def wait_for_exit(observer, path):
             for board in new_boards.difference(boards):
                 logger.info('Found new board %r', board)
                 create_sync_directory(board, path)
+            for board in boards.difference(new_boards):
+                logger.warn('Board %r has gone away', board)
             boards = new_boards
     except KeyboardInterrupt:
         observer.stop()
