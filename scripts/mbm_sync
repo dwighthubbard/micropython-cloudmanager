@@ -118,7 +118,6 @@ def main(path):
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, filename='mbm_sync.log')
     preserve = [handler.stream.fileno() for handler in logging.root.handlers]
-    logger.info(preserve)
     redis_db = connect_to_redis()
     if redis_db.exists('mbm_sync:heartbeat'):
         print('mbm_sync is already running, exiting', file=sys.stderr)
