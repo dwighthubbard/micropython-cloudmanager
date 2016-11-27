@@ -3,9 +3,11 @@ from __future__ import print_function
 import daemon
 import logging
 import os
+import sys
 import time
 
 from cloudmanager.board import MicropythonBoards, MicropythonBoard
+from cloudmanager.utility import connect_to_redis
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
@@ -53,10 +55,12 @@ class BoardHandler(FileSystemEventHandler):
 
 
 def wait_for_exit(observer, path):
+    redis_db = connect_to_redis()
     boards = set(board_names())
     try:
         while True:
             time.sleep(5)
+            redis_db.setex('mbm_sync:heartbeat', 10)
             new_boards = set(board_names())
             for board in new_boards.difference(boards):
                 logger.info('Found new board %r', board)
@@ -66,6 +70,7 @@ def wait_for_exit(observer, path):
             boards = new_boards
     except KeyboardInterrupt:
         observer.stop()
+    redis_db.delete('mbm_sync:heartbeat')
     observer.join()
 
 
@@ -112,6 +117,10 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, filename='mbm_sync.log')
     preserve = [handler.stream.fileno() for handler in logging.root.handlers]
     logger.info(preserve)
+    redis_db = connect_to_redis()
+    if redis_db.exists('mbm_sync:heartbeat'):
+        print('mbm_sync is already running, exiting', file=sys.stderr)
+        sys.exit(1)
     with daemon.DaemonContext(files_preserve=preserve):
         logger.info('Monitoring /tmp/mbm for items to sync')
         main('/tmp/mbm')
