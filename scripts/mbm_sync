@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 from __future__ import print_function
-# import daemon
+import daemon
 import logging
 logging.basicConfig(level=logging.INFO)
 import os
@@ -94,6 +94,7 @@ def create_sync_directories(path):
 
 
 def main(path):
+
     logger.debug('Setting up sync directories')
 
     create_sync_directories(path)
@@ -107,4 +108,6 @@ def main(path):
 
 
 if __name__ == "__main__":
-    main('/tmp/mbm')
+    log_handler = logging.root.handlers[0].stream.fileno()
+    with daemon.DaemonContext(files_preserve=[2]):
+        main('/tmp/mbm')
