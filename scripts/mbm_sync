@@ -69,6 +69,7 @@ def wait_for_exit(observer, path):
             for board in board_names.difference(new_boards):
                 logger.warn('Board %r has gone away', board)
             board_names = new_boards
+            check_for_command(redis_db)
     except KeyboardInterrupt:
         observer.stop()
     redis_db.delete('mbm_sync:heartbeat')
@@ -96,6 +97,12 @@ def create_sync_directories(path):
         create_sync_directory(board.name, path)
 
 
+def check_for_command(redis_db):
+    command = redis_db.rpop('mbm_sync:command')
+    if command == 'quit':
+        sys.exit(0)
+
+
 def main(path):
 
     logger.debug('Setting up sync directories')
@@ -116,6 +123,10 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, filename='mbm_sync.log')
     preserve = [handler.stream.fileno() for handler in logging.root.handlers]
     redis_db = connect_to_redis()
+    if sys.argv[-1] == 'stop':
+        redis_db.lpush('mbm_sync:command', 'quit')
+        redis_db.ttl('mbm_sync:command', 15)
+        sys.exit(0)
     if redis_db.exists('mbm_sync:heartbeat'):
         print('mbm_sync is already running, exiting', file=sys.stderr)
         sys.exit(1)
