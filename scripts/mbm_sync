@@ -125,7 +125,7 @@ if __name__ == "__main__":
     redis_db = connect_to_redis()
     if sys.argv[-1] == 'stop':
         redis_db.lpush('mbm_sync:command', 'quit')
-        redis_db.ttl('mbm_sync:command', 15)
+        redis_db.expire('mbm_sync:command', 15)
         sys.exit(0)
     if redis_db.exists('mbm_sync:heartbeat'):
         print('mbm_sync is already running, exiting', file=sys.stderr)
