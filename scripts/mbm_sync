@@ -100,6 +100,8 @@ def create_sync_directories(path):
 def check_for_command(redis_db):
     command = redis_db.rpop('mbm_sync:command')
     if command == 'quit':
+        redis_db.delete('mbm_sync:heartbeat')
+        redis_db.delete('mbm_sync:command')
         sys.exit(0)
 
 
