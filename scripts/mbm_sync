@@ -101,7 +101,7 @@ def check_for_command(redis_db):
     command = redis_db.rpop('mbm_sync:command')
     if command:
         logger.info('Got command %r', command)
-    if command == 'quit':
+    if command == b'quit':
         redis_db.delete('mbm_sync:heartbeat')
         redis_db.delete('mbm_sync:command')
         sys.exit(0)
