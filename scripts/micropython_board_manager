@@ -66,7 +66,7 @@ if __name__ == "__main__":
         board_configuration_parser.add_argument('--redis_port', default='18266', help='Redis server port')
 
     board_macro_parser.add_argument('board', default=None, help='Board(s) to execute the code on')
-    board_macro_parser.add_argument('macro', default='ls', help="Macro command to execute on the board")
+    board_macro_parser.add_argument('macro', default='ls', choices=MACROS.keys(), help="Macro command to execute on the board")
     board_macro_parser.add_argument('arguments', nargs='?', help='Macro arguments')
 
     board_execute_parser.add_argument('board', default=None, help='Board(s) to execute the code on')
