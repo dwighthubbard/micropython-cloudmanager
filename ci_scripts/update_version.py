@@ -55,3 +55,4 @@ def update_setup_version(filename=None, version=None):
 if __name__ == '__main__':
     update_setup_version('setup.py')
     update_dunder_init_version('cloudmanager/__init__.py')
+    os.system('git commit -a -m "Updated version"')
