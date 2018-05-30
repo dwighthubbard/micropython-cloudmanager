@@ -31,7 +31,7 @@ def get_service_addresses():
     return listen_addresses
 
 
-def run_server(port, rdb_file=None, daemonize=True):
+def run_server(port, rdb_file=None, daemonize=False):
     """
     Run the cloudmanager server on the local system
 
