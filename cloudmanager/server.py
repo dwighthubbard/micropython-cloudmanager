@@ -65,7 +65,7 @@ def monitor_server(connection):
         if not status or connection.ttl(STATUS_KEY) < 2:
             connection.setex(STATUS_KEY, 'Running', 10)
         time.sleep(1)
-    connection.delete(STATUS_KEY)
+    # connection.delete(STATUS_KEY)
     connection.shutdown()
     return
 
