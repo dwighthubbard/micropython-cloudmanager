@@ -45,10 +45,12 @@ def run_server(port, rdb_file=None):
     """
     if not rdb_file:
         rdb_file = RDB_FILE
-    connection = redislite.Redis(dbfilename=rdb_file, serverconfig={'port': port, 'protected-mode': 'no'})
     listen_addresses = get_service_addresses()
     if listen_addresses:
         print('Cloudmanager service is listening on:', ','.join([addr+':'+str(port) for addr in listen_addresses]))
+        connection = redislite.Redis(dbfilename=rdb_file, serverconfig={'port': port, 'bind': listen_addresses[0]})
+    else:
+        connection = redislite.Redis(dbfilename=rdb_file, serverconfig={'port': port, 'bind': '127.0.0.1'})
     with daemon.DaemonContext():
         monitor_server(connection)
 
