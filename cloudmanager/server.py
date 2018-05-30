@@ -52,17 +52,16 @@ def run_server(port, rdb_file=None):
     else:
         connection = redislite.StrictRedis(dbfilename=rdb_file, serverconfig={'port': str(port), 'bind': '127.0.0.1'})
 
-    connection.set(STATUS_KEY, 'Running')
     with daemon.DaemonContext():
         monitor_server(connection)
 
 
 def monitor_server(connection):
-    time.sleep(60)
     status = b'Running'
     connection.setex(STATUS_KEY, status, 10)
     while status != b'quit':
         status = connection.get(STATUS_KEY)
+        LOG.debug(f'Status: {status!r}')
         if not status or connection.ttl(STATUS_KEY) < 2:
             connection.setex(STATUS_KEY, 'Running', 10)
         time.sleep(1)
