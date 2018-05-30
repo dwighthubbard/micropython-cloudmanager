@@ -91,7 +91,7 @@ def quit(rdb_file=None):
         raise ValueError('Server shutdown failed')
 
 
-def status(rdb_file):
+def status(rdb_file=None):
     """
     Print the server status
 
