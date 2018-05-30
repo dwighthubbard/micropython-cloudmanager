@@ -48,9 +48,9 @@ def run_server(port, rdb_file=None):
     listen_addresses = get_service_addresses()
     if listen_addresses:
         print('Cloudmanager service is listening on:', ','.join([addr+':'+str(port) for addr in listen_addresses]))
-        connection = redislite.Redis(dbfilename=rdb_file, serverconfig={'port': port, 'bind': listen_addresses[0]})
+        connection = redislite.Redis(dbfilename=rdb_file, serverconfig={'port': str(port), 'bind': listen_addresses[0]})
     else:
-        connection = redislite.Redis(dbfilename=rdb_file, serverconfig={'port': port, 'bind': '127.0.0.1'})
+        connection = redislite.Redis(dbfilename=rdb_file, serverconfig={'port': str(port), 'bind': '127.0.0.1'})
     with daemon.DaemonContext():
         monitor_server(connection)
 
