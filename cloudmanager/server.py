@@ -48,9 +48,9 @@ def run_server(port, rdb_file=None):
     listen_addresses = get_service_addresses()
     if listen_addresses:
         print('Cloudmanager service is listening on:', ','.join([addr+':'+str(port) for addr in listen_addresses]))
-        connection = redislite.Redis(rdb_file, serverconfig={'port': str(port), 'bind': listen_addresses[0]})
+        connection = redislite.StrictRedis(dbfilename=rdb_file, serverconfig={'port': str(port), 'bind': listen_addresses[0]})
     else:
-        connection = redislite.Redis(rdb_file, serverconfig={'port': str(port), 'bind': '127.0.0.1'})
+        connection = redislite.StrictRedis(dbfilename=rdb_file, serverconfig={'port': str(port), 'bind': '127.0.0.1'})
 
     with daemon.DaemonContext():
         monitor_server(connection)
@@ -82,7 +82,7 @@ def quit(rdb_file=None):
         rdb_file = RDB_FILE
     retry_count = 10
     while retry_count and status(rdb_file):
-        connection = redislite.Redis(rdb_file)
+        connection = redislite.StrictRedis(dbfilename=rdb_file)
         connection.setex(STATUS_KEY, b'quit', 10)
         retry_count -= 1
         time.sleep(1)
@@ -101,7 +101,7 @@ def status(rdb_file):
     """
     if not rdb_file:
         rdb_file = RDB_FILE
-    connection = redislite.Redis(rdb_file)
+    connection = redislite.StrictRedis(dbfilename=rdb_file)
     status = connection.get(STATUS_KEY)
     if status:
         return status.decode()
