@@ -52,6 +52,7 @@ def run_server(port, rdb_file=None):
     else:
         connection = redislite.StrictRedis(dbfilename=rdb_file, serverconfig={'port': str(port), 'bind': '127.0.0.1'})
 
+    connection.set(STATUS_KEY, 'Running')
     with daemon.DaemonContext():
         monitor_server(connection)
 
