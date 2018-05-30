@@ -57,6 +57,7 @@ def run_server(port, rdb_file=None):
 
 
 def monitor_server(connection):
+    time.sleep(60)
     status = b'Running'
     connection.setex(STATUS_KEY, status, 10)
     while status != b'quit':
