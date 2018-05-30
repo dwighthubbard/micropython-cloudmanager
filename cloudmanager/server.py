@@ -89,7 +89,7 @@ def quit(rdb_file=None):
     retry_count = 10
     while retry_count and status(rdb_file):
         connection = redislite.StrictRedis(dbfilename=rdb_file)
-        connection.setex(STATUS_KEY, b'quit', 10)
+        connection.setex(STATUS_KEY, 10, b'quit')
         retry_count -= 1
         time.sleep(1)
     if retry_count == 0:
