@@ -58,15 +58,15 @@ def run_server(port, rdb_file=None, daemonize=False):
     else:
         monitor_server(connection)
 
-def monitor_server(connection):
+def monitor_server(connection, ttl=10):
     status = 'Running'
-    connection.setex(STATUS_KEY, status, 10)
+    connection.setex(STATUS_KEY, ttl, status)
     while status != 'quit':
         status = connection.get(STATUS_KEY)
         status = status.decode()
         LOG.debug(f'Status: {status!r}')
         if not status or connection.ttl(STATUS_KEY) < 2:
-            connection.setex(STATUS_KEY, 'Running', 10)
+            connection.setex(STATUS_KEY, ttl, 'Running')
         time.sleep(1)
     # connection.delete(STATUS_KEY)
     connection.shutdown()
