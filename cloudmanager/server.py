@@ -31,7 +31,7 @@ def get_service_addresses():
     return listen_addresses
 
 
-def run_server(port, rdb_file=None):
+def run_server(port, rdb_file=None, daemonize=False):
     """
     Run the cloudmanager server on the local system
 
@@ -52,9 +52,11 @@ def run_server(port, rdb_file=None):
     else:
         connection = redislite.StrictRedis(dbfilename=rdb_file, serverconfig={'port': str(port), 'bind': '127.0.0.1'})
 
-    with daemon.DaemonContext():
+    if daemonize:
+        with daemon.DaemonContext():
+            monitor_server(connection)
+    else:
         monitor_server(connection)
-
 
 def monitor_server(connection):
     status = 'Running'
