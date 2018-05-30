@@ -31,7 +31,7 @@ def get_service_addresses():
     return listen_addresses
 
 
-def run_server(port, rdb_file=None, daemonize=False):
+def run_server(port, rdb_file=None, daemonize=True):
     """
     Run the cloudmanager server on the local system
 
@@ -58,6 +58,7 @@ def run_server(port, rdb_file=None, daemonize=False):
     else:
         monitor_server(connection)
 
+
 def monitor_server(connection, ttl=10):
     status = 'Running'
     connection.setex(STATUS_KEY, ttl, status)
@@ -68,7 +69,7 @@ def monitor_server(connection, ttl=10):
         if not status or connection.ttl(STATUS_KEY) < 2:
             connection.setex(STATUS_KEY, ttl, 'Running')
         time.sleep(1)
-    # connection.delete(STATUS_KEY)
+    connection.delete(STATUS_KEY)
     connection.shutdown()
     return
 
